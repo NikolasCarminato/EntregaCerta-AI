@@ -142,6 +142,84 @@ function botaoAssistentePedido(id, tipo) {
   return botao;
 }
 
+function valorEvidencia(item) {
+  const valor = item.valor;
+  if (valor === null || valor === undefined || valor === '') return 'Não informado';
+  const dia = v => v ? String(v).slice(0, 10).split('-').reverse().join('/') : 'Não informado';
+  const etapas = {recebido: 'Recebido', em_preparacao: 'Em preparação', despachado: 'Despachado', entregue: 'Entregue'};
+  if (item.formato === 'data') return dia(valor);
+  if (item.formato === 'data_hora') return dia(valor) + ' ' + String(valor).slice(11, 19);
+  if (item.formato === 'booleano') return valor ? 'Sim' : 'Não';
+  if (item.formato === 'etapa') return etapas[valor] || String(valor);
+  if (item.formato === 'numero' && typeof valor === 'number') return new Intl.NumberFormat('pt-BR', {maximumFractionDigits: 6}).format(valor);
+  if (item.formato === 'historico') return valor.length ? valor.map(evento => {
+    const partes = [evento.em || 'Data não informada'];
+    if (evento.status) partes.push(etapas[evento.status] || evento.status);
+    (evento.alteracoes || []).forEach(a => partes.push(`Prazo: ${dia(a.anterior)} → ${dia(a.novo)}`));
+    return partes.join(' · ');
+  }).join('\n') : 'Nenhum evento fornecido nesta consulta';
+  return String(valor);
+}
+
+function mostrarEvidencias(mensagem, dados) {
+  const evidencias = dados.evidencias;
+  if (!evidencias || !Array.isArray(evidencias.itens)) return;
+  const citadas = new Set(evidencias.citadas || []);
+  const painel = document.createElement('details'); painel.className = 'assistant-evidence';
+  const resumo = document.createElement('summary');
+  resumo.textContent = citadas.size ? `Ver evidências · ${citadas.size} referência(s)` : 'Ver dados da consulta';
+  const origem = document.createElement('p'); origem.className = 'evidence-source'; origem.textContent = evidencias.origem;
+  const horario = valor => {
+    const data = new Date(valor);
+    return Number.isNaN(data.getTime()) ? 'Horário não informado' : new Intl.DateTimeFormat('pt-BR', {
+      dateStyle: 'short', timeStyle: 'medium', timeZone: 'America/Sao_Paulo',
+    }).format(data);
+  };
+  const consulta = document.createElement('p'); consulta.className = 'evidence-time';
+  consulta.textContent = `Contexto consultado em ${horario(evidencias.consultado_em)} (Brasília).`;
+  painel.append(resumo, origem, consulta);
+  if (evidencias.lote_carregado_em) {
+    const lote = document.createElement('p'); lote.className = 'evidence-time';
+    lote.textContent = `Lote histórico carregado em ${horario(evidencias.lote_carregado_em)} (Brasília).`; painel.append(lote);
+  }
+  const nota = document.createElement('p'); nota.className = 'evidence-note';
+  nota.textContent = citadas.size
+    ? 'As referências destacam os dados citados pela IA. Uma citação não comprova causas de atraso.'
+    : 'Estes dados foram disponibilizados à IA. A resposta não citou referências específicas.';
+  painel.append(nota);
+  const lista = document.createElement('dl'); lista.className = 'evidence-list';
+  const linhas = new Map();
+  [...evidencias.itens].sort((a, b) => Number(citadas.has(b.id)) - Number(citadas.has(a.id))).forEach(item => {
+    const linha = document.createElement('div'); linha.tabIndex = -1;
+    linha.className = citadas.has(item.id) ? 'evidence-item is-cited' : 'evidence-item';
+    const titulo = document.createElement('dt'); titulo.textContent = `[${item.id}] ${item.rotulo}`;
+    const valor = document.createElement('dd'); valor.textContent = valorEvidencia(item);
+    linha.append(titulo, valor); lista.append(linha); linhas.set(item.id, linha);
+  });
+  painel.append(lista); mensagem.elemento.append(painel);
+  // Converte apenas referências conhecidas em botões. Nenhum HTML da IA é executado.
+  const walker = document.createTreeWalker(mensagem.corpo, NodeFilter.SHOW_TEXT);
+  const textos = []; while (walker.nextNode()) textos.push(walker.currentNode);
+  textos.forEach(no => {
+    if (no.parentElement.closest('code, pre, a, button')) return;
+    const fragmento = document.createDocumentFragment(); let inicio = 0;
+    for (const ocorrencia of no.textContent.matchAll(/\[(E\d+(?:\s*[,;]\s*E\d+)*)\]/g)) {
+      const referencias = ocorrencia[1].match(/E\d+/g);
+      if (!referencias.every(id => linhas.has(id))) continue;
+      fragmento.append(document.createTextNode(no.textContent.slice(inicio, ocorrencia.index)));
+      referencias.forEach(id => {
+        const linha = linhas.get(id);
+        const botao = document.createElement('button'); botao.type = 'button'; botao.className = 'assistant-citation';
+        botao.textContent = `[${id}]`; botao.setAttribute('aria-label', 'Ver evidência ' + linha.querySelector('dt').textContent);
+        botao.addEventListener('click', () => { painel.open = true; linha.focus({preventScroll: true}); linha.scrollIntoView({block: 'nearest', behavior: 'instant'}); });
+        fragmento.append(botao, document.createTextNode(' '));
+      });
+      inicio = ocorrencia.index + ocorrencia[0].length;
+    }
+    if (inicio) { fragmento.append(document.createTextNode(no.textContent.slice(inicio))); no.replaceWith(fragmento); }
+  });
+}
+
 function configurarAssistente() {
   const abrir = document.getElementById("abrir-assistente");
   const painel = document.getElementById("assistente-dialog");
@@ -356,11 +434,15 @@ function configurarAssistente() {
 
   function acoesResposta(mensagem, dados) {
     const acompanhar = conteudo.scrollHeight - conteudo.scrollTop - conteudo.clientHeight < 100;
+    mostrarEvidencias(mensagem, dados);
     const acoes = document.createElement('div'); acoes.className = 'assistant-answer-actions';
     const aviso = document.createElement('p'); aviso.className = 'assistant-action-status'; aviso.setAttribute('role', 'status');
     const copiarResposta = document.createElement('button'); copiarResposta.type = 'button'; copiarResposta.textContent = 'Copiar resposta';
     copiarResposta.addEventListener('click', async () => {
-      try { await navigator.clipboard.writeText(dados.resposta); aviso.textContent = 'Resposta copiada.'; }
+      const citadas = dados.evidencias?.itens.filter(e => dados.evidencias.citadas.includes(e.id)) || [];
+      const fontes = citadas.length ? '\n\nEvidências — ' + dados.evidencias.origem + '\nConsultado em: ' + dados.evidencias.consultado_em + '\n'
+        + citadas.map(e => `[${e.id}] ${e.rotulo}: ${valorEvidencia(e)}`).join('\n') : '';
+      try { await navigator.clipboard.writeText(dados.resposta + fontes); aviso.textContent = 'Resposta copiada.'; }
       catch { aviso.textContent = 'Selecione o texto da resposta e use Copiar no seu dispositivo.'; }
     });
     const positivo = document.createElement('button'), negativo = document.createElement('button');

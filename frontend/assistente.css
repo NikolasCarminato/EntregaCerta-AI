@@ -16,4 +16,18 @@
 .assistant-toolbar button:disabled, .assistant-answer-actions button:disabled, .assistant-retry:disabled {opacity:.55; cursor:wait;}
 .assistant-drawer .assistant-content {min-height:0;}
 .assistant-answer-actions [hidden] {display:none;}
+.assistant-evidence {margin-top:16px; border:1px solid #a3b5a1; border-radius:10px; overflow:hidden; background:#f6f8f1; color:#243a30; font-size:.8rem; line-height:1.5;}
+.assistant-evidence summary {padding:12px; cursor:pointer; font-weight:700; color:#203629;}
+.assistant-evidence summary:hover {background:#e4eccf;}
+.assistant-evidence p {margin:8px 12px; color:#385245; font-size:.77rem;}
+.assistant-evidence .evidence-source {font-weight:700;}
+.assistant-evidence .evidence-time {font-size:.72rem;}
+.evidence-list {margin:12px;}
+.evidence-item {padding:10px; margin:8px 0; border-left:3px solid #b1bfa6; background:#edf2e6; overflow-wrap:anywhere;}
+.evidence-item.is-cited {border-left-color:#668000; background:#e3edc3;}
+.evidence-item dt {font-weight:700; font-size:.75rem;}
+.evidence-item dd {margin:5px 0 0; white-space:pre-wrap; font-size:.8rem;}
+.assistant-citation {border:1px solid #789341; border-radius:5px; background:#e3edc3; color:#253c0b; font:inherit; font-size:.8em; padding:1px 5px; cursor:pointer;}
+.assistant-citation:hover {background:#d4ff35;}
+.assistant-evidence summary:focus-visible, .evidence-item:focus, .assistant-citation:focus-visible {outline:2px solid #436020; outline-offset:-2px;}
 @media(max-width:520px) {.assistant-toolbar {padding:10px 16px;gap:8px;} .assistant-toolbar button {padding:9px;font-size:.75rem;} #assistente-aviso {font-size:.72rem;line-height:1.4;} .assistant-drawer .assistant-composer {padding:12px 16px;}}

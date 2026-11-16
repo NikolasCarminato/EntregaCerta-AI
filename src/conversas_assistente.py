@@ -10,6 +10,7 @@ from uuid import uuid4
 from fastapi import HTTPException
 
 from .acesso_web import conexao_web
+from .evidencias_genai import contextualizar, preparar, contexto_com_evidencias, conferir_referencias
 
 TTL = 30 * 60
 MAX_CONVERSAS = 100
@@ -82,12 +83,20 @@ def conversar(identificador, usuario, requisicao, pergunta, contexto, gerar):
             if len(conversa.requisicoes) >= MAX_PERGUNTAS:
                 raise HTTPException(409, "Limite desta conversa atingido. Inicie uma nova conversa.")
             conversa.requisicoes[chave] = {"pergunta": pergunta}
-        resultado = gerar(pergunta, contexto, historico=list(conversa.historico))
+        contexto = contextualizar(contexto, usuario["perfil"], pergunta=pergunta)
+        evidencias = preparar(contexto)
+        resultado = gerar(pergunta, contexto_com_evidencias(contexto, evidencias), historico=list(conversa.historico))
         # Texto truncado não entra na memória nem recebe avaliação.
         if resultado.get("disponivel") and resultado.get("motivo_termino") not in (None, "STOP"):
             resultado = {"disponivel": False, "resposta": "A IA não concluiu a resposta. Tente novamente."}
         resultado = {**resultado, "conversa_id": str(identificador)}
         if resultado.get("disponivel"):
+            citadas, desconhecidas = conferir_referencias(resultado["resposta"], evidencias)
+            if desconhecidas:
+                return {"disponivel": False, "conversa_id": str(identificador),
+                        "resposta": "A IA citou uma referência que não está nesta consulta. Tente novamente."}
+            # O provedor não escolhe a fonte, o horário nem os valores exibidos.
+            resultado["evidencias"] = {**evidencias, "citadas": citadas}
             resultado["resposta_id"] = str(uuid4())
             conversa.requisicoes[chave].update(resultado=resultado, modelo=os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite"))
             conversa.historico.extend([
@@ -142,6 +151,7 @@ def contexto_loja(usuario, pedido_id):
         eventos.append(publico)
     return {
         "publico": usuario["perfil"],
+        "fonte_dados": "loja",
         "contexto": "Pedido selecionado na loja demonstrativa — sem pagamento ou envio real",
         "pedido": {"status": pedido["status"], "uf": pedido["uf"],
                    "prazo_prometido": str(pedido["prazo_prometido"]) if pedido["prazo_prometido"] else None,

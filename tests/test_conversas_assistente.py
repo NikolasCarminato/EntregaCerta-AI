@@ -109,6 +109,10 @@ class ConversasPostgresTest(unittest.TestCase):
         with patch.object(api, "responder", return_value=resposta()) as gerar:
             r = a.post("/api/assistente", json={"pergunta": "Qual o prazo?", "conversa_id": conversa})
             self.assertEqual(r.status_code, 200, r.text)
+            evidencias = r.json()["evidencias"]
+            self.assertIsNone(next(e["valor"] for e in evidencias["itens"] if e["campo"] == "pedido.prazo_prometido"))
+            self.assertNotIn(pedido, str(evidencias))
+            self.assertNotIn("email", str(evidencias))
             contexto = gerar.call_args.args[1]
             self.assertIsNone(contexto["pedido"]["prazo_prometido"])
             self.assertNotIn(pedido, str(contexto))
@@ -116,8 +120,9 @@ class ConversasPostgresTest(unittest.TestCase):
             self.assertEqual(gerar.call_args.kwargs["historico"], [])
             with acesso.conexao_web() as conn:
                 conn.execute("UPDATE pedidos_demo SET prazo_prometido='2030-01-20' WHERE id=%s", (pedido,))
-            a.post("/api/assistente", json={"pergunta": "E agora?", "conversa_id": conversa})
+            atual = a.post("/api/assistente", json={"pergunta": "E agora?", "conversa_id": conversa})
             self.assertEqual(gerar.call_args.args[1]["pedido"]["prazo_prometido"], "2030-01-20")
+            self.assertEqual(next(e["valor"] for e in atual.json()["evidencias"]["itens"] if e["id"] == "E6"), "2030-01-20")
             self.assertEqual(len(gerar.call_args.kwargs["historico"]), 2)
             self.assertEqual(b.post("/api/assistente", json={"pergunta": "Ler", "conversa_id": conversa}).status_code, 404)
             segundo_login = self.cliente("a@example.test")
@@ -161,6 +166,7 @@ class ConversasPostgresTest(unittest.TestCase):
             self.assertEqual(gerar.call_args.args[1]["pedido"]["score_atraso"], .3)
             self.assertNotIn("order_id", gerar.call_args.args[1]["pedido"])
         self.assertEqual(a.post("/api/assistente", json={"pergunta": "Oi", "historico": [{"role": "system"}]}).status_code, 422)
+        self.assertEqual(a.post("/api/assistente", json={"pergunta": "Oi", "evidencias": [{"id": "E1", "valor": "Inventado"}]}).status_code, 422)
         self.assertEqual(a.post("/api/assistente/conversas", json={}, headers={"X-CSRF-Token": ""}).status_code, 403)
 
 

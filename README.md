@@ -57,6 +57,16 @@ em Modelos registram modelos, parâmetros e resultados, por isso foram preservad
 
 ## Limites atuais
 
+No assistente, clique nas referências **[E6]** ou em **Ver evidências** para conferir
+os campos, a fonte e a data da consulta usados naquela resposta. Valores ausentes
+aparecem como “Não informado”. A lista é produzida pelo servidor; ela não garante
+que toda interpretação da IA esteja correta. Perguntas gerais mostram os dados
+disponibilizados sem atribuir a eles uma citação que a resposta não fez.
+
+Os [testes de qualidade da GenAI](Docs/avaliacao_genai_2026-11-16.csv) registram
+respostas reais do Gemini a cenários fictícios, alertas automáticos e leitura
+assistida. Há instruções de reprodução e limitações no [registro técnico](Docs/desenvolvimento.md).
+
 - O dashboard faz reprodução histórica; o score é risco relativo, não probabilidade calibrada.
 - A loja é demonstrativa, sem pagamento ou envio real. Seus novos pedidos ainda não recebem score de ML.
 - O modelo web mantém a fila de 10% originalmente configurada. Os estudos de recall de 90%/95% são experimentos separados.

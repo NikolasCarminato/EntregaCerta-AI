@@ -1246,3 +1246,268 @@ salvas no próprio notebook. A função de treinamento dos estudos e a célula d
 CrossEntropy mantêm o código do notebook anterior; não houve adoção dos modelos
 experimentais pela aplicação. Os seis hashes de dados/modelos foram reconferidos
 ao final e continuam iguais aos anteriores à organização.
+
+## 16/11/2026 — Evidências nas respostas e qualidade da GenAI
+
+O chat passou a exibir referências clicáveis, como `[E6]`, e um quadro recolhível
+com os valores, a origem e o horário em que o contexto foi preparado. O histórico
+Olist também mostra quando o lote em cache foi carregado; a data da consulta não
+transforma os registros de 2016–2018 em entregas atuais. A lista vem de campos
+permitidos do contexto autorizado, não de fatos gerados pela LLM. Nulos e zero são
+preservados. Autores, e-mails, identificadores e justificativas internas não entram
+na lista. A autorização de cliente/analista continua sendo verificada no servidor.
+
+Cada resposta mantém a sua própria cópia dos dados. Repetir uma requisição já
+concluída preserva resposta e consulta originais. Referências inexistentes do tipo
+`[E999]`, inclusive em grupos, impedem que o texto seja apresentado como concluído
+ou incluído na memória. A validação confere a existência do identificador, não a
+verdade de toda a frase. Sem referência explícita, a interface diz que os dados
+foram disponibilizados, sem afirmar que a IA os usou. Copiar uma resposta também
+copia os campos citados. Não foi introduzido RAG, agente ou nova dependência.
+
+Arquivos principais: `src/evidencias_genai.py`, `src/conversas_assistente.py`,
+`src/assistente_genai.py`, metadados em `src/api.py` e o painel compartilhado em
+`frontend/assistente.js` / `frontend/assistente.css`. A intro, o treinamento, os
+artefatos e a lógica de inferência de ML não foram alterados.
+
+### Validação executada
+
+- Suíte de aplicação e integração: 45 testes passaram com PostgreSQL em schemas
+  temporários. Depois, 18 testes de evidências/provedor passaram novamente,
+  incluindo um novo caso de formulações incorretas: 46 casos distintos no total.
+  O Docker estava inicialmente desligado; foi iniciado para concluir a integração.
+  A limpeza dos patches de teste foi reforçada para uma falha de conexão não
+  contaminar os testes seguintes.
+- Edge em 1440×1000 e 390×844: referências individuais/agrupadas, fonte/horário,
+  foco por teclado, cópia com fontes, nulo, pergunta geral, nova conversa e texto
+  malicioso tratado como texto. Esses testes usam um servidor descartável com
+  fixtures, sem chamar o ML. As capturas foram inspecionadas visualmente.
+- Qualidade do `gemini-3.5-flash-lite`: 39 chamadas em rodadas iterativas, cobrindo
+  13 cenários distintos com dados fictícios identificados exclusivamente como
+  testes técnicos. Perguntas, contexto, resposta, término, latência, referências,
+  alertas e leitura assistida foram preservados em `avaliacao_genai_2026-11-16.csv`.
+  As três rodadas completas e as reexecuções dirigidas estão diferenciadas.
+
+Os cenários cobrem datas informadas/ausentes/revisadas, comparação de prazos,
+score versus probabilidade, causas desconhecidas, distância versus causalidade,
+cobertura da fila com dois conjuntos de números, métrica não fornecida, instrução
+maliciosa em dado, histórico desatualizado, tentativa de alteração e conta geral.
+
+Os testes reais revelaram referências agrupadas que o primeiro leitor ignorava,
+marcadores não padronizados e contas em LaTeX sem renderização. Isso motivou a
+correção do leitor e do prompt. A leitura assistida também identificou duas frases
+imprecisas: chamar distância e score de riscos relativos e sugerir gestão de
+entregas reais na loja demonstrativa. Após reforçar as instruções, essas imprecisões
+não apareceram na reexecução dos dois casos. Os textos anteriores permanecem no CSV.
+O alerta de prazo ausente também foi preservado: a IA citou corretamente o prazo
+original, distinguindo-o do prazo atual não informado. Esse é um exemplo de alerta
+automático que exige interpretação, não de nova data inventada.
+
+As checagens por padrões são triagem, não um verificador semântico completo.
+O campo `revisao_assistida` registra a leitura feita nesta tarefa;
+`revisao_humana` permanece **PENDENTE** para a equipe. Rodadas iterativas sobre a
+mesma amostra não estimam uma taxa geral de alucinação, nem medem desempenho de ML.
+
+### Como reproduzir
+
+Na raiz do projeto, com Docker/PostgreSQL disponíveis:
+
+```powershell
+$env:ENTREGACERTA_TEST_POSTGRES="1"
+.\.venv\Scripts\python.exe -B -m unittest tests.test_evidencias_genai tests.test_conversas_assistente tests.test_assistente_genai tests.test_relatorio_pdf tests.test_acesso_web -v
+```
+
+Para repetir os cenários com a API configurada (consome cota; apenas fixtures):
+
+```powershell
+.\.venv\Scripts\python.exe -B -m src.avaliar_genai --real --saida Docs/avaliacao_genai_nova.csv
+```
+
+Use outro nome a cada rodada: o avaliador recusa sobrescrever resultados.
+`--caso distancia_nao_causa`, por exemplo, executa só um cenário; a opção pode
+ser repetida. Leia as respostas e registre a revisão humana antes de usar os
+resultados no artigo como evidência de qualidade. A interface continua funcional
+quando a API generativa está indisponível.
+
+## Avaliação ampliada da GenAI — uso por cliente e analista (16/11/2026)
+
+Objetivo: testar o comportamento atual com perguntas cotidianas, ambíguas e de
+continuação, sem ajustar o prompt para as perguntas da rodada. Modelo configurado:
+`gemini-3.5-flash-lite`. Foram usados o provedor, a memória de conversa e o leitor
+de evidências reais da aplicação, com contextos fictícios no formato do backend.
+Não foram enviados pedidos reais ou dados pessoais; os números das fixtures não
+são resultados Olist nem evidência de desempenho de ML. Não houve teste de
+interface, autorização HTTP ou consulta PostgreSQL nesta rodada.
+
+### Execução e rastreabilidade
+
+- `src/avaliar_genai_uso.py`: 24 cenários, com 30 perguntas/turnos; critérios
+  definidos antes das chamadas. Inclui mudança de contexto durante a conversa.
+- `avaliacao_genai_uso_2026-11-16.csv`: 30 tentativas, 21 respostas de conteúdo
+  e 9 fallbacks de indisponibilidade. A primeira rodada não espaçava chamadas;
+  o código HTTP dessas falhas não foi preservado, portanto a causa não foi
+  determinada. Não classificá-las como alucinações.
+- `avaliacao_genai_uso_repeticao_2026-11-16.csv`: 16 tentativas dirigidas aos
+  cenários afetados e a respostas problemáticas, com pausa de cinco segundos;
+  todas retornaram conteúdo. A melhora observada não comprova que a frequência
+  de chamadas tenha causado as falhas iniciais.
+- Total: 46 tentativas, 37 respostas com término `STOP`, sem truncamento
+  observado. `STOP` e referências existentes não garantem correção semântica.
+- Todas as respostas foram lidas e anotadas em `revisao_assistida`, `gravidade`
+  e `notas_revisao`. `revisao_humana` continua **PENDENTE** para a equipe.
+  A leitura classificou 21 respostas como adequadas, 13 com ressalvas e 3 com
+  falhas de conteúdo/orientação, além das 9 indisponibilidades. Essas categorias
+  são qualitativas; a amostra dirigida e suas repetições não estimam acurácia
+  geral do assistente nem taxa geral de alucinação.
+- Perguntas, contexto enviado, histórico, resposta bruta/exibida, evidências,
+  modelo, latência e hashes foram preservados. A anotação posterior foi conferida
+  para não modificar os campos de execução. Os dez arquivos de aplicação,
+  frontend e inferência acompanhados por SHA-256 permaneceram iguais durante
+  a avaliação. Apenas o avaliador e os registros desta rodada foram trabalhados.
+
+### Onde ainda falhou ou precisa melhorar
+
+| Caso | Resposta observada | Limite identificado |
+|---|---|---|
+| C04 — despachado | Disse que o pedido já saiu do centro de distribuição. | Só havia status, sem esse evento/local. A referência existia, mas não sustentava o detalhe. Não repetiu o detalhe na segunda chamada. |
+| C08 — cancelamento | Orientou gerenciar registros pelo botão Conversar sobre pedido. | O botão apenas consulta dados; não cancela. Na repetição passou a dizer consultar, mas o encaminhamento ainda não resolve a solicitação. |
+| A02 — fila de 5% | Recusou dizer quantos pedidos entrariam, mesmo tendo o total de 1.003. | Poderia estimar 50,15, aproximadamente 50 pedidos, esclarecendo arredondamento. Corretamente não inventou aumento de precisão. |
+| C02 — revisão de prazo | Afirmou categoricamente que não estava atrasado, usando o prazo atualizado. | A consulta não fornecia data atual ao Gemini. A frase era compatível com o dia do teste, mas faltou base temporal explícita e distinção clara entre prorrogação e atraso observado. |
+| A11 — PDF | Disse que gerar/enviar PDF não está disponível. | Correto não fingir anexar arquivo no chat, mas não delimitou bem esse alcance nem orientou ao botão existente no dashboard. O contexto não informa essa funcionalidade. |
+
+Outras ressalvas: avisos genéricos de avaliação humana para o consumidor;
+afirmação de que não há registro de justificativa quando ela apenas não foi
+enviada; uso de referência de status para explicar genericamente separação e
+embalagem; mistura entre loja demonstrativa e pedido histórico Olist; sugestões
+ao analista que basicamente repetem os campos. Esses detalhes estão anotados
+individualmente nos CSVs, inclusive quando a repetição foi melhor.
+
+### O que funcionou nesta amostra
+
+Não foram identificadas datas prometidas novas, nomes/contatos, métricas de
+acurácia ou economias financeiras inventadas. O assistente não simulou rastreio
+externo, cancelamento, acesso a outra conta ou envio de arquivo. Distinguiu score
+de probabilidade, recusou atribuir negligência com base no score, não criou
+contagens de atrasos ausentes e calculou corretamente 100/1.003 = 9,97%.
+Na repetição da conversa com atualização, usou o prazo de 22/11 em vez de manter
+20/11 da resposta anterior. Isso descreve apenas as respostas observadas.
+
+Prioridades propostas, ainda não implementadas: fornecer catálogo de capacidades
+por perfil (inclusive PDF no dashboard e ausência de cancelamento no chat);
+definir o significado das etapas sem inferir eventos físicos; fornecer data/fuso
+de referência e preservar prazo original ao avaliar atraso; separar contas
+possíveis de métricas que exigem dados adicionais; simplificar respostas ao
+cliente. A validação de IDs de evidência deve continuar sendo apresentada como
+checagem de referência, não como prova de toda a frase.
+
+Para reproduzir a rodada completa com pausas, na raiz do projeto:
+
+```powershell
+.\.venv\Scripts\python.exe -X utf8 -B -m src.avaliar_genai_uso --real --saida Docs/avaliacao_genai_uso_nova.csv --intervalo 5
+```
+
+O arquivo de saída deve ser novo. `--caso C04_despachado` seleciona um cenário;
+essa opção pode ser repetida. O teste usa a API configurada e consome cota.
+Não se deve apagar tentativas ruins ou anunciar taxa de sucesso apenas a partir
+das repetições bem-sucedidas.
+
+
+## Correções de calendário e referências da GenAI — 16/11/2026
+
+Esta seção atualiza o estado após a avaliação anterior. Os registros anteriores
+foram preservados, inclusive as rodadas `avaliacao_genai_uso_corrigida` (36
+respostas) e `avaliacao_genai_uso_ajuste_final` (9 respostas), realizadas antes da
+interrupção. Naquela etapa, ainda apareceu a contradição de dizer que o prazo
+venceu hoje e que ainda não foi ultrapassado.
+
+### O que foi implementado
+
+- O backend calcula, separadamente, os limites do prazo atual e do original.
+  Até o próprio dia, inclusive, o prazo não foi ultrapassado; somente a partir
+  do dia seguinte. A comparação usa a data de referência em America/Sao_Paulo.
+  Nulo/invalidade não viram zero, promessa vigente ou evento de remoção.
+  Esses cálculos não inferem a data da entrega efetiva nem alteram rótulos de ML.
+  Pedidos históricos Olist não recebem comparação de atraso com a data atual.
+- No chat, cada fato é enviado uma única vez, ao lado do ID e do nome do campo.
+  O avaliador registra essa representação efetivamente enviada. O contrato do
+  resumo PDF foi preservado, sem marcadores do chat.
+- Calendários receberam referências E37/E38; quantidade fora da fila, E39;
+  informações não fornecidas nesta consulta, E40; simulação de capacidade, E41.
+  Os IDs anteriores foram preservados. Fontes de cálculos são campos derivados
+  do servidor, não observações adicionais do dataset.
+- Contagem fora da fila é total menos selecionados. Simulações reconhecem um
+  percentual explicitamente ligado a capacidade/revisão do lote inteiro e usam
+  Decimal com arredondamento para baixo. Exemplo técnico: 17% de 1.003 resulta
+  em 170,51, portanto 170 pedidos. Isso não altera a fila, não executa ML e não
+  estima precisão/recall. Pedidos com múltiplos percentuais ou subgrupo explícito
+  reconhecido não recebem essa simulação automática; o parser não é universal.
+- Ausência é descrita como falta de informação nesta consulta, sem concluir que
+  o dado inexiste no projeto. Zero é preservado como informação fornecida.
+
+Arquivos de execução: `src/evidencias_genai.py`, `src/assistente_genai.py`,
+`src/conversas_assistente.py`. O avaliador continua em `src/avaliar_genai_uso.py`.
+Os testes foram acrescentados aos módulos de teste existentes. A dependência
+`tzdata` já declarada permite o fuso também no Windows. Não houve troca de modelo
+Gemini nem mudança da configuração de geração do PDF.
+
+### Validação executada nesta continuação
+
+- 53 testes automatizados passaram: calendário (inclusive ano bissexto e viradas
+  de mês/ano), fontes e valores, simulação e arredondamento, memória, isolamento
+  de contas, permissões, CSRF, feedback e geração/contingência do PDF.
+- A primeira tentativa de integração falhou em dois setups por timeout do
+  PostgreSQL: Docker estava desligado. Docker e o contêiner existente foram
+  iniciados; a suíte completa passou depois, em schemas temporários removidos
+  pelos testes. Os avisos de erro simulado nos testes do provedor são esperados.
+- Gemini configurado: `gemini-3.5-flash-lite`. Primeira rodada desta continuação:
+  36 tentativas em `avaliacao_genai_calendario_2026-11-16.csv`, todas com conteúdo.
+  O calendário respondeu corretamente ao caso do próprio dia. A rodada também
+  revelou uma base errada na hipótese de 17% e referências inadequadas a cenário,
+  motivando a simulação calculada no servidor e as novas evidências E39–E41.
+- Rodada final dirigida: dez cenários repetidos duas vezes, sem mudanças de código
+  entre as chamadas, em `avaliacao_genai_calendario_referencias_final_2026-11-16.csv`.
+  Das 20 tentativas, 17 tiveram conteúdo e três retornaram contingência por
+  `RemoteProtocolError` sem código HTTP. Os três cenários responderam na segunda
+  repetição. Não houve truncamento nas respostas de conteúdo. A causa externa
+  desses erros de comunicação não foi determinada ou corrigida nesta etapa.
+- Na leitura das respostas finais, os erros centrais não se repetiram: prazo atual
+  no próprio dia não ultrapassado, prazo original preservado, data nula sem nova
+  promessa, base de 1.003 para as hipóteses, resultados 50/170 e contagem 903 com
+  referências pertinentes. Distância, score e prazo foram associados aos campos
+  corretos nos cenários de explicação.
+
+As duas rodadas desta continuação somam 56 tentativas, não 56 respostas úteis.
+As leituras foram registradas sem alterar perguntas, contexto ou saídas brutas.
+Na rodada final houve 14 respostas classificadas como adequadas, três com
+ressalvas leves e três indisponibilidades. As ressalvas foram o número 100
+repetido da pergunta sem E3 em uma resposta e duas orientações redundantes para
+abrir o próprio chat. Esses rótulos são revisão assistida, não uma taxa geral de
+acurácia; `revisao_humana` permanece PENDENTE para a equipe.
+
+A rodada ampla também preserva problemas fora do recorte final, como uma
+simplificação que tratou preparação como separação física confirmada. Portanto,
+o assistente não deve ser apresentado como livre de alucinações. Referências
+existentes continuam sem garantir a verdade de toda a frase. A verificação
+semântica desta avaliação foi assistida e a amostra dirigida é limitada.
+
+Todos os contextos usados nas chamadas reais eram fixtures fictícias para testes
+funcionais, sem dados pessoais ou evidência de desempenho de ML. O visual e a
+intro foram preservados; a comparação SHA-256 dos arquivos protegidos confirma
+que frontend, modelos, notebooks e código fora do escopo não foram alterados.
+
+Para repetir a suíte (com PostgreSQL ativo):
+
+```powershell
+$env:ENTREGACERTA_TEST_POSTGRES="1"
+.\.venv\Scripts\python.exe -B -m unittest tests.test_evidencias_genai tests.test_conversas_assistente tests.test_assistente_genai tests.test_relatorio_pdf tests.test_acesso_web -v
+```
+
+Para uma rodada real dirigida (consome cota; use saída ainda inexistente):
+
+```powershell
+.\.venv\Scripts\python.exe -X utf8 -B -m src.avaliar_genai_uso --real --saida Docs/avaliacao_nova.csv --intervalo 5 --repeticoes 2 --caso C16_dia_do_prazo --caso C17_atual_ausente_original_conhecido --caso A13_capacidade_alternativa --caso A10_acuracia
+```
+
+O CSV preserva a data de referência, o contexto, o histórico e hashes do código.
+Repetir chamadas não garante respostas textualmente idênticas. Servidores sem
+recarga automática precisam ser reiniciados para carregar as alterações.

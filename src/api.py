@@ -235,13 +235,14 @@ def contexto_assistente(usuario, pedido=None):
         registro = lote.loc[lote["order_id"].eq(pedido["id"])].drop(columns="order_id")
         if registro.empty:
             raise HTTPException(404, "Pedido não encontrado.")
-        return {"publico": "analista", "contexto": "Pedido histórico Olist — partição de validação",
+        return {"publico": "analista", "fonte_dados": "olist", "contexto": "Pedido histórico Olist — partição de validação",
                 "pedido": json.loads(registro.to_json(orient="records", date_format="iso"))[0],
                 "consultado_em": consultado_em,
                 "limites": "Score é risco relativo, não probabilidade calibrada. Atributos não comprovam causas do atraso. Sem previsão de data individual ou alteração de pedido."}
     if usuario["perfil"] == "cliente":
         return {
             "publico": "cliente",
+            "fonte_dados": "orientacoes",
             "contexto": "Área do cliente — loja demonstrativa EntregaCerta AI",
             "funcionalidades": "Catálogo, carrinho, meus pedidos, prazo prometido e histórico de etapas e prazos.",
             "prazo": "Informado pela equipe; se não definido, não há uma data prometida disponível.",
@@ -252,6 +253,7 @@ def contexto_assistente(usuario, pedido=None):
     dados = consultar_prioridades()
     return {
         "publico": "analista",
+        "fonte_dados": "fila",
         "contexto": dados["contexto"],
         "pedidos_avaliados": dados["pedidos_avaliados"],
         "pedidos_na_fila": dados["pedidos_na_fila"],

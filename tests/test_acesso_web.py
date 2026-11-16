@@ -18,8 +18,10 @@ class AcessoWebTest(unittest.TestCase):
         cls.esquema = "test_web_" + uuid4().hex
         cls.patch_schema = patch.object(acesso, "ESQUEMA", cls.esquema)
         cls.patch_schema.start()
+        cls.addClassCleanup(cls.patch_schema.stop)
         cls.origens = patch.dict(os.environ, {"ENTREGACERTA_ORIGINS": "http://testserver", "ENTREGACERTA_COOKIE_SECURE": "false"})
         cls.origens.start()
+        cls.addClassCleanup(cls.origens.stop)
         acesso.inicializar()
         cls.senha = "Teste-isolado-" + uuid4().hex
         cls.ana = acesso.criar_usuario("Analista de teste", "analista@example.test", cls.senha, "analista")
