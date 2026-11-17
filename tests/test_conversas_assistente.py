@@ -48,6 +48,83 @@ class MemoriaTest(unittest.TestCase):
             self.enviar(gerar, pergunta="Outra", requisicao=requisicao)
         self.assertEqual(erro.exception.status_code, 409)
 
+    def test_retira_encaminhamento_repetido_sem_mudar_fatos_ou_resposta_bruta(self):
+        contexto={"fonte_dados":"orientacoes", "limites":"Nenhum pedido selecionado.",
+                  "funcionalidades":"Meus pedidos e Conversar sobre pedido."}
+        def enviar(texto,pergunta):
+            bruto=resposta(texto)
+            resultado=memoria.conversar(self.id,self.usuario,uuid4(),pergunta,contexto,Mock(return_value=bruto))
+            self.assertEqual(bruto['resposta'],texto)
+            return resultado
+        enviar('Acesse Meus pedidos e use Conversar sobre pedido [E28].','Cadê minha compra?')
+        r=enviar('Não há pedido selecionado [E32]. Para consultar a compra, acesse Meus pedidos e use Conversar sobre pedido [E28].','É a última compra. Pode puxar?')
+        self.assertEqual(r['resposta'],'Não há pedido selecionado [E32].')
+        self.assertEqual(r['orientacoes_repetidas_removidas'],1)
+        self.assertEqual(r['evidencias']['citadas'],['E32'])
+        self.assertEqual(memoria.obter(self.id,self.usuario).historico[-1]['texto'],r['resposta'])
+
+    def test_ajuda_explicita_primeira_orientacao_e_fatos_sao_preservados(self):
+        historico=[{'papel':'model','texto':'Acesse Meus pedidos e use Conversar sobre pedido.'}]
+        nav='Não há pedido selecionado [E32]. Acesse Meus pedidos e use Conversar sobre pedido [E35].'
+        for pergunta in ['Onde clico?', 'Como faço?', 'Repita os passos.', 'Me diga o caminho de novo.', 'Não entendi.', 'Pode explicar melhor?', 'O que eu tenho que fazer?', 'O que é Meus pedidos?']:
+            with self.subTest(pergunta=pergunta):
+                self.assertEqual(memoria.reduzir_orientacoes_repetidas(nav,historico,pergunta),(nav,0))
+        self.assertEqual(memoria.reduzir_orientacoes_repetidas(nav,[],'Cadê a compra?'),(nav,0))
+        for texto in [
+            'Acesse Meus pedidos para ver o prazo 20/11/2026 [E6].',
+            'Não acesse Meus pedidos para rastrear compras externas [E35].',
+            'Acesse Meus pedidos; não há data informada [E6].',
+            'Acesse Meus pedidos e use Conversar sobre pedido [E35].',
+            'O score 0.82 não representa 82% de chance [E26].',
+        ]:
+            with self.subTest(texto=texto):
+                self.assertEqual(memoria.reduzir_orientacoes_repetidas(texto,historico,'Pode puxar?'),(texto,0))
+
+    def test_remocao_preserva_citacoes_apos_ponto_e_nao_oculta_fonte_invalida(self):
+        historico=[{'papel':'model','texto':'Acesse Meus pedidos e use Conversar sobre pedido.'}]
+        texto='Não há pedido selecionado. [E32] Acesse **Meus pedidos** e use **Conversar sobre pedido**. [E35]'
+        reduzida,n=memoria.reduzir_orientacoes_repetidas(texto,historico,'Pode puxar?')
+        self.assertEqual(reduzida,'Não há pedido selecionado. [E32]');self.assertEqual(n,1)
+        memoria.obter(self.id,self.usuario).historico=historico.copy()
+        erro=self.enviar(Mock(return_value=resposta('Não há seleção. Acesse Meus pedidos e use Conversar sobre pedido [E999].')))
+        self.assertFalse(erro['disponivel'])
+        self.assertEqual(memoria.obter(self.id,self.usuario).historico,historico)
+
+    def test_pedido_selecionado_sem_prazo_nao_e_devolvido_a_mesma_tela(self):
+        contexto={'fonte_dados':'loja','pedido':{'prazo_prometido':None,'prazo_original':None}}
+        bruto=resposta('Você pode consultar os detalhes do seu pedido na seção Meus pedidos [E35].')
+        r=memoria.conversar(self.id,self.usuario,uuid4(),'Já estou neste pedido. Onde vejo a data?',contexto,Mock(return_value=bruto))
+        self.assertTrue(r['orientacao_corrigida_com_contexto'])
+        self.assertNotIn('Meus pedidos',r['resposta'])
+        self.assertIn('não foram informados',r['resposta'])
+        self.assertEqual(r['evidencias']['citadas'],['E6','E7'])
+        self.assertIn('Meus pedidos',bruto['resposta'])
+        for texto in ['Você pode conferir os registros demonstrativos na seção Meus pedidos [E35].',
+                      'Meus pedidos > Conversar sobre pedido [E35].']:
+            with self.subTest(texto=texto):
+                corrigida,alterou=memoria.corrigir_reencaminhamento_sem_prazo(texto,'Onde vejo a data?',contexto)
+                self.assertTrue(alterou)
+                self.assertIn('não foram informados',corrigida)
+        texto='A data não está informada nos registros [E6, E7]. Você pode conferir os detalhes disponíveis na seção Meus pedidos [E35].'
+        corrigida,alterou=memoria.corrigir_reencaminhamento_sem_prazo(texto,'Onde vejo a data?',contexto)
+        self.assertTrue(alterou)
+        self.assertEqual(corrigida,'A data não está informada nos registros [E6, E7].')
+
+    def test_correcao_de_prazo_nao_altera_datas_conhecidas_nem_navegacao_de_outro_pedido(self):
+        contexto={'fonte_dados':'loja','pedido':{'prazo_prometido':None,'prazo_original':None}}
+        nav='Para consultar os detalhes, acesse Meus pedidos [E35].'
+        for pergunta,ctx,texto in [
+            ('Onde vejo a data de outro pedido?',contexto,nav),
+            ('Onde posso editar o prazo?',contexto,nav),
+            ('Onde vejo a data?',{'fonte_dados':'loja','pedido':{'prazo_prometido':'2030-01-20','prazo_original':None}},nav),
+            ('Onde vejo a data?',{'fonte_dados':'loja','pedido':{'prazo_prometido':None,'prazo_original':'2030-01-18'}},nav),
+            ('Onde vejo a data?',{},nav),
+            ('Qual o status?',contexto,nav),
+            ('Onde vejo a data?',contexto,'A data não foi informada [E6].'),
+        ]:
+            with self.subTest(pergunta=pergunta,ctx=ctx):
+                self.assertEqual(memoria.corrigir_reencaminhamento_sem_prazo(texto,pergunta,ctx),(texto,False))
+
     def test_isolamento_por_sessao_expiracao_e_exclusao(self):
         with self.assertRaises(HTTPException) as erro:
             memoria.obter(self.id, {**self.usuario, "csrf": "outro-login"})

@@ -106,11 +106,12 @@ atual nesses registros. Não misture esse cenário com a loja demonstrativa.
 
 Separe as partes de uma pergunta: calcule o que os dados permitem e explique
 apenas o que não pode ser determinado. Para uma capacidade hipotética da fila,
-use simulacao_fila quando fornecida: ela já calcula o percentual solicitado
-sobre pedidos_avaliados, não sobre pedidos_na_fila. Só use uma base diferente
-quando o usuário explicitamente pedir um subgrupo. Sem simulação pronta,
-calcule total de pedidos avaliados x percentual / 100, arredondando para baixo o número
-de pedidos, conforme a regra operacional. Não recuse essa conta só porque o
+use simulacao_fila quando fornecida: ela já aplica a base e o arredondamento da
+política ativa. Na política por lote, calcula a fração do total e arredonda para
+baixo. Na política de cota diária, calcula sobre os pendentes de CADA DIA,
+arredonda para cima em cada dia e soma os resultados. Não troque essas regras.
+Sem simulação pronta, não presuma que o total global seja a base de uma cota
+diária; esclareça que faltam os dados ou a definição da hipótese. Não recuse essa conta só porque o
 percentual proposto difere do configurado. Isso não mede precisão, recall,
 economia ou atrasos evitados e não altera a fila na aplicação.
 
@@ -205,6 +206,23 @@ são verificações, não ações executadas nem causas descobertas. Limitaçõe
 CHAT não devem ser generalizadas para todas as funções da aplicação.
 """
 
+REGRAS_CALCULOS = """
+Concisão nunca permite escrever uma igualdade matemática inexata.
+Diferencie RESULTADO EXATO da conta e QUANTIDADE INTEIRA após aplicar a regra
+informada pelo servidor. Na política por lote, arredonde para baixo. Na cota
+diária, arredonde para cima em cada dia e só depois some: não arredonde a soma
+global. Quando a divisão gerar fração, mostre o valor exato e a quantidade
+operacional, identificando o arredondamento usado. Não use o sinal
+= para trocar o resultado fracionário pelo inteiro sem indicar essa operação.
+Na simulação de capacidade, copie o cálculo do servidor em simulacao_fila e cite
+sua evidência E41. E4 descreve a capacidade ATUAL e não sustenta uma hipótese com
+outro percentual. Cite E2 para o total e E41 para o percentual solicitado, a conta
+e o arredondamento. Se comparar capacidade atual e hipótese, cite cada uma junto
+do respectivo valor. Não troque fontes entre os dois cenários.
+Ao dizer que não há métricas disponíveis, use a evidência de informações ausentes;
+não use contagens ou o cenário como prova de desempenho do modelo.
+"""
+
 MAX_TENTATIVAS = 3
 MAX_ESPERA_RETRY = 8.0
 TRANSITORIOS_HTTP = {408, 429, 500, 502, 503, 504}
@@ -286,23 +304,25 @@ def responder(pergunta, contexto, *, para_relatorio=False, historico=None):
     modelo = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite")
     tentativas = 0
     falhas = []
+    versao_modelo = None
 
     def resultado(disponivel, texto, motivo=None, categoria=None):
         return {"disponivel": disponivel, "resposta": texto, "motivo_termino": motivo,
                 "erro_codigo": categoria, "tentativas": tentativas,
-                "recuperada": disponivel and bool(falhas), "falhas_tentativas": list(falhas)}
+                "recuperada": disponivel and bool(falhas), "falhas_tentativas": list(falhas),
+                "modelo_solicitado": modelo, "modelo_respondido": versao_modelo}
 
     if not chave:
         return resultado(False, "O assistente ainda não está configurado.", categoria="configuracao")
 
-    regras = REGRAS
+    regras = REGRAS + "\nAo calcular, diferencie resultado exato de valor arredondado. Nunca apresente uma igualdade inexata; diga quando arredondar.\n"
     if not para_relatorio:
         regras += REGRAS_USO
         if contexto.get("publico") == "cliente":
             regras += REGRAS_CLIENTE
         if contexto.get("evidencias_disponiveis"):
             regras += REGRAS_EVIDENCIAS
-        regras += REGRAS_CONCISAO
+        regras += REGRAS_CONCISAO + REGRAS_CALCULOS
         # Estado da conversa vindo do servidor, não instruções escritas pelo usuário.
         if contexto.get("pedido"):
             regras += "\nJá existe pedido selecionado nesta conversa. Dado ausente não pede nova seleção.\n"
@@ -326,6 +346,8 @@ def responder(pergunta, contexto, *, para_relatorio=False, historico=None):
     prazo = monotonic() + (105 if para_relatorio else 90)
     pensamento = None
     nome_modelo = modelo.removeprefix("models/")
+    if not para_relatorio and nome_modelo.startswith("gemini-3.6-flash"):
+        pensamento = types.ThinkingConfig(thinking_level="minimal")
     if para_relatorio and nome_modelo.startswith("gemini-3"):
         nivel = "minimal" if nome_modelo.startswith(("gemini-3.6-flash", "gemini-3.1-flash-lite")) else "low"
         pensamento = types.ThinkingConfig(thinking_level=nivel)
@@ -368,6 +390,7 @@ def responder(pergunta, contexto, *, para_relatorio=False, historico=None):
                     sleep(espera)
                     continue
 
+                versao_modelo = getattr(resposta, "model_version", None)
                 candidatos = resposta.candidates or []
                 motivo = candidatos[0].finish_reason if candidatos else None
                 motivo = getattr(motivo, "value", motivo)

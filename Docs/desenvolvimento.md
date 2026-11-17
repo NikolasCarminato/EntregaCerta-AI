@@ -1511,3 +1511,355 @@ Para uma rodada real dirigida (consome cota; use saída ainda inexistente):
 O CSV preserva a data de referência, o contexto, o histórico e hashes do código.
 Repetir chamadas não garante respostas textualmente idênticas. Servidores sem
 recarga automática precisam ser reiniciados para carregar as alterações.
+
+
+## Consistência, navegação e falhas da GenAI — 16 e 17/11/2026
+
+Ajustes solicitados: reduzir orientações repetidas, manter a resposta ligada à
+pergunta e recuperar falhas temporárias da API, preservando visual, intro e ML.
+O modelo configurado permaneceu `gemini-3.5-flash-lite`.
+
+### Comportamento e arquivos
+
+`src/assistente_genai.py` passou a priorizar respostas curtas, considerar que um
+pedido já foi selecionado e separar rastreio externo de pedidos demonstrativos.
+A política de API usa no máximo três tentativas no total, com espera progressiva
+e pequena variação aleatória para desconexões, timeouts e HTTP 408/429/500/502/503/504.
+Os retries internos do SDK ficam desabilitados para não multiplicar chamadas.
+Retry-After/RetryInfo são respeitados; uma espera superior a oito segundos devolve
+uma mensagem de indisponibilidade, sem insistir imediatamente. Erros de configuração
+não são repetidos. Os orçamentos de tentativas são de 90 s no chat e 105 s no PDF,
+com timeout de cada chamada limitado ao tempo restante; não são promessa de latência.
+Bloqueios do provedor e respostas vazias não são repetidos. No PDF, a ampliação
+4096 → 8192 tokens em caso de MAX_TOKENS compartilha o limite de três tentativas.
+Essas escolhas seguem a orientação de recuperação limitada da
+[documentação oficial de erros do Gemini](https://aistudio.google.com/docs/troubleshooting).
+
+`src/conversas_assistente.py` aplica duas verificações restritas após validar as
+referências: retirar encaminhamentos já explicados e evitar mandar o cliente
+voltar à mesma tela para procurar um prazo ausente. A segunda só se aplica a
+pedido demonstrativo selecionado, com os dois campos de prazo explicitamente
+nulos e pergunta sobre data/prazo. Se a resposta contém fatos e navegação em
+frases separadas, preserva os fatos. Se contém somente o encaminhamento indevido,
+usa uma mensagem calculada pelo servidor a partir de E6/E7. Essa mensagem não é
+uma nova conclusão do modelo. Pedidos para ver outro pedido, editar prazo ou
+repetir ajuda são preservados; datas conhecidas e frases com fatos/restrições
+não são apagadas. Trata-se de proteção restrita, não verificação semântica geral.
+
+O avaliador `src/avaliar_genai_uso.py` registra texto bruto e exibido separadamente,
+tentativas, recuperação, remoções e correções baseadas no contexto. Perguntas,
+contextos, saídas originais e hashes das rodadas foram preservados. A revisão
+assistida foi preenchida; `revisao_humana` continua PENDENTE para a equipe.
+Os testes novos estão em `tests/test_conversas_assistente.py`; a recuperação da
+API é coberta também por `tests/test_assistente_genai.py`.
+
+### Execuções e evidências
+
+Todos os contextos das chamadas reais abaixo são **fixtures fictícias para teste
+funcional**, sem dados pessoais, compras reais ou evidência de desempenho de ML.
+Não houve consulta de pedidos reais para enviá-los ao Gemini. A autorização da
+rodada de 17/11 foi reavaliada e liberada após conferir essa origem dos dados.
+
+| Registro em Docs | Respostas | Leitura assistida da saída exibida naquela versão |
+| --- | ---: | --- |
+| avaliacao_genai_consistencia_2026-11-16.csv | 43 | 33 adequadas, 9 ressalvas, 1 falha |
+| avaliacao_genai_consistencia_final_2026-11-16.csv | 20 | 11 adequadas, 8 ressalvas, 1 falha |
+| avaliacao_genai_repeticoes_2026-11-17.csv | 30 | 23 adequadas, 4 ressalvas, 3 falhas |
+| avaliacao_genai_navegacao_final_2026-11-17.csv | 10 | 7 adequadas, 2 ressalvas, 1 falha |
+| avaliacao_genai_navegacao_confirmacao_2026-11-17.csv | 3 | 2 adequadas, 1 falha |
+
+As rodadas são diagnósticas, dirigidas e dependentes entre si; não são uma taxa
+geral de acerto. Término STOP indica conclusão, não verdade. Houve 43 respostas
+concluídas nas chamadas de 17/11. Um ReadTimeout real em C19, repetição 2/turno 2
+da rodada de 30, foi recuperado na segunda tentativa; latência total 56,914 s.
+Os demais erros de API foram exercitados por injeção simulada: sem provocar falhas
+reais de credencial e sem expor corpo de erro, URL ou chave.
+
+A rodada de 30 confirmou duas remoções do encaminhamento repetido de C01.
+Reaplicar esse filtro às 63 respostas de 16/11 removeu somente três encaminhamentos.
+Ainda apareceram variações de retorno à mesma tela em C18. Após o último ajuste,
+a **reprodução local das 43 saídas brutas de 17/11** corrigiu exatamente três
+respostas: C18, repetição 2/turno 2 nas rodadas de 30 e de 10; e C18, turno 2 na
+rodada de 3. As outras saídas ficaram iguais. Nas duas respostas compostas apenas
+por navegação, o servidor informou a ausência dos dois prazos; na resposta mista,
+preservou “A data não está informada nos registros [E6, E7].”.
+
+Não houve nova chamada ao Gemini depois desse último ajuste determinístico:
+a conferência final foi feita sobre os textos brutos já registrados e nos testes.
+As falhas intermediárias permanecem nos CSVs, sem substituir o resultado antigo
+pelo replay. SHA-256 final do módulo de conversas será registrado abaixo para
+identificar o código da conferência.
+
+A suíte com PostgreSQL ativo concluiu **68 testes, todos aprovados**. Após o último
+ajuste de tratamento das frases, foram repetidos os **53 testes pertinentes** de
+memória, evidências, provedor e PDF, também aprovados. Os testes de integração usam
+esquemas temporários, sem alterar os pedidos do projeto. A primeira versão do
+separador de frases apresentou erro de expressão regular nos testes; foi corrigida
+antes das chamadas de avaliação dessa versão.
+
+Em 16/11, a chamada real do resumo PDF também terminou em STOP, em uma tentativa;
+o PDF de duas páginas continha o resumo inteiro. Evidência:
+`avaliacao_genai_pdf_consistencia_2026-11-16.csv`. Foi um PDF em memória com
+indicadores fictícios de teste, não um novo resultado de ML.
+
+### Limitações que permanecem
+
+- Algumas respostas adicionam datas/explicações que não foram pedidas.
+- Ao pedir navegação, o modelo às vezes cita Meus pedidos e omite o botão
+  Conversar sobre pedido. O filtro não inventa os passos ausentes.
+- Em A14, o número operacional de 50 pedidos está correto, mas duas respostas
+  escreveram a conta sem mostrar o arredondamento: 1003 × 5 / 100 = 50,15 e,
+  pela regra de capacidade, selecionam-se 50. Uma citou E4 (capacidade atual
+  de 10%) em vez de E41 (simulação de 5%). Essas falhas de explicação/referência
+  foram preservadas e **não foram corrigidas por este ajuste de navegação**.
+- Referências existentes não garantem que toda afirmação esteja correta.
+  O assistente continua sujeito a revisão humana; não foi demonstrado risco zero
+  de alucinação ou confiabilidade de produção.
+
+Para repetir os testes locais (PostgreSQL disponível):
+
+```powershell
+$env:ENTREGACERTA_TEST_POSTGRES="1"
+.\.venv\Scripts\python.exe -X utf8 -B -m unittest tests.test_evidencias_genai tests.test_conversas_assistente tests.test_assistente_genai tests.test_relatorio_pdf tests.test_acesso_web -q
+```
+
+O frontend, a intro, os modelos, os notebooks e o código fora do escopo foram
+comparados por SHA-256 com o início da retomada. Não houve commit, push, mudança
+de credenciais ou retraining. Servidores sem recarga automática precisam ser
+reiniciados para carregar o ajuste do assistente.
+
+SHA-256 de `src/conversas_assistente.py` na conferência final: `bb3669865d826b242d4a9b4501a06bc742179d89a3b53a033911eb82f907bdae`.
+
+
+## Arredondamentos, referências e Gemini 3.6 Flash — 17/11/2026
+
+A configuração local `GEMINI_MODEL` e o exemplo de ambiente passaram para
+`gemini-3.6-flash`, conforme solicitado. As demais variáveis e credenciais foram
+preservadas. O identificador foi conferido na
+[documentação oficial do modelo](https://aistudio.google.com/docs/models/gemini-3.6-flash).
+No chat e no resumo PDF, o 3.6 utiliza `thinking_level=minimal`, suportado pela
+[documentação oficial de thinking](https://aistudio.google.com/docs/thinking?generate-content=true),
+para respostas curtas sobre fatos já calculados. Não foram ajustados temperatura,
+credenciais, plano de cobrança ou limites do serviço.
+
+### Causa encontrada e correção
+
+A pergunta “E quantos entrariam se a capacidade fosse de 5%?” não correspondia ao
+reconhecedor de simulação. A inspeção dos contextos registrados em A14 confirmou
+que **E41 não havia sido enviada** nesses turnos. Portanto, o diagnóstico anterior
+que pressupunha E41 disponível estava incompleto: além da referência incorreta,
+havia uma falha no reconhecimento da pergunta pela aplicação.
+
+`src/evidencias_genai.py` agora reconhece formulações condicionais explícitas como
+“capacidade fosse de”, “for de”, “ficar em” e “passar para”. Continua rejeitando
+percentuais negativos, superiores a 100, múltiplos percentuais e subgrupos que
+não permitem presumir o lote inteiro. A capacidade atual não é alterada.
+
+A evidência E41 agora separa **resultado exato** e **quantidade operacional após
+arredondamento para baixo**, usando Decimal e apresentação decimal em português:
+1003 × 5 / 100 = 50,15; quantidade operacional = 50. Foram testados também
+19 × 2,5 / 100 = 0,475 → 0; 1234 × 12,5 / 100 = 154,25 → 154; e casos de zero
+ou resultado inteiro. E4 continua indicando a capacidade atual, enquanto E41
+identifica a hipótese solicitada. Os IDs antigos permanecem estáveis.
+
+`src/assistente_genai.py` orienta a preservar a distinção exato/arredondado e a
+citar E2 para o total e E41 para a hipótese, sem atribuir a E4 um percentual
+hipotético diferente. A regra contra igualdades inexatas também vale para PDF.
+O retorno e o avaliador passaram a registrar o modelo informado pelo provedor,
+além do modelo solicitado. Não foi acrescentado um verificador semântico geral:
+ter um ID válido continua sem garantir sozinho a verdade de toda frase.
+
+### Testes executados e limite externo
+
+A suíte local com PostgreSQL concluiu **70 testes, todos aprovados**, incluindo
+os novos casos de formulação condicional, valores fracionários, fontes separadas,
+limites da API, memória, permissões e PDF. Comando:
+
+```powershell
+$env:ENTREGACERTA_TEST_POSTGRES="1"
+.\.venv\Scripts\python.exe -X utf8 -B -m unittest tests.test_evidencias_genai tests.test_conversas_assistente tests.test_assistente_genai tests.test_relatorio_pdf tests.test_acesso_web -q
+```
+
+As chamadas externas usaram apenas fixtures fictícias de teste, sem consultar
+pedidos reais ou executar ML. Registros:
+
+| Arquivo em Docs | Observação real |
+| --- | --- |
+| avaliacao_genai_36_calculos_inicial_2026-11-17.csv | Três mensagens de chat: uma resposta concluída, com modelo respondido gemini-3.6-flash, e duas indisponibilidades após três tentativas cada. |
+| avaliacao_genai_36_pdf_2026-11-17.csv | Dois testes de PDF, lotes fictícios de 20 e 1003 pedidos; ambos sem resumo da GenAI após três respostas 504 do serviço. |
+| avaliacao_genai_36_disponibilidade_2026-11-17.csv | Sonda isolada “Responda apenas OK.”, uma tentativa, também falhou com HTTP 504 em aproximadamente 15 s. |
+
+A única resposta concluída informou corretamente 903 pedidos fora da fila com
+E39, E2 e E3. **As perguntas de arredondamento não tiveram resposta do 3.6**, logo
+não foram aprovadas como avaliação real do modelo. Os erros registrados foram
+HTTP 503/504; não foi observada uma mensagem de credencial inválida. Isso limita
+a conclusão ao comportamento observado nesta conta/rodada, sem afirmar que o
+serviço esteja indisponível para todos.
+
+Os PDFs de contingência foram gerados em `tmp/pdfs/gemini36/`, renderizados com
+Poppler e inspecionados nas quatro páginas. Não houve cortes ou sobreposições;
+indicadores, gráficos e aviso de GenAI indisponível permaneceram legíveis. Os
+valores de teste são fictícios. Como o template de produção possui textos fixos
+sobre a fonte Olist, esses arquivos são **artefatos temporários de QA, não
+relatórios para publicar nem evidência de desempenho de ML**. O layout não foi
+alterado. Não é correto dizer que o resumo generativo completo do 3.6 foi validado.
+
+Após falhas repetidas inclusive na sonda mínima, a rodada maior de chat foi
+adiada para não consumir novas chamadas enquanto o serviço retornava erro.
+A validação de conteúdo do 3.6 e do resumo generativo PDF permanece pendente de
+nova execução com a API respondendo. As correções locais e o funcionamento da
+contingência foram efetivamente testados; não houve substituição silenciosa por
+outro modelo nem uso de respostas de exemplo como se fossem respostas reais.
+
+Quando o serviço estiver respondendo, repetir primeiro o caso corrigido e as
+variações, com nome de saída novo para preservar as evidências:
+
+```powershell
+$env:GEMINI_MODEL="gemini-3.6-flash"
+.\.venv\Scripts\python.exe -X utf8 -B -m src.avaliar_genai_uso --real --saida Docs/avaliacao_genai_36_nova.csv --caso A14_concisao_seguimento --caso A15_capacidade_fracionaria_pequena --caso A16_capacidade_outra_base --caso A17_comparar_capacidades
+```
+
+Em seguida, ampliar para os demais casos e gerar novamente o PDF pelo dashboard
+do analista. A mudança de `.env` requer reiniciar servidores que já tenham
+carregado a configuração antiga. Esta tarefa não editou visual, intro, modelos,
+notebooks ou inferência e não executou treino, commit ou push.
+
+Na comparação final com os 239 hashes iniciais, apareceram mudanças simultâneas
+fora desta tarefa: frontend, integração da API/PDF, inferência e artefatos
+CatBoost VER07. Esses arquivos não foram revertidos nem sobrescritos. Portanto,
+não se afirma que todo o workspace permaneceu idêntico: os 70 testes e os PDFs
+referem-se ao estado carregado durante cada execução, não certificam as mudanças
+paralelas posteriores. A validação conjunta da nova integração deve considerar
+esse novo estado, além da pendência de disponibilidade do Gemini 3.6.
+
+
+Conciliação do prompt com a alteração paralela: a integração VER07 acrescentou
+uma política de cota diária sobre pendentes, com arredondamento para cima por
+dia. As instruções da GenAI foram ajustadas para obedecer à política e à E41
+recebidas, sem impor o arredondamento para baixo da política antiga por lote.
+Não se alterou a regra do modelo. Uma regressão distingue três e sete pendentes
+em dois dias a 10%: 1 + 1 = 2 alertas, em vez de aplicar uma fração ao total global.
+A disponibilidade real do 3.6 continua pendente; essa conciliação foi testada localmente.
+
+Após a conciliação do prompt, 47 testes de evidências, provedor e memória foram reexecutados e aprovados (incluindo a regressão nova de cota diária). Não houve nova chamada real à API depois desse ajuste; a validação de conteúdo com 3.6 permanece pendente pelos erros registrados.
+
+
+## 17/11/2026 — integração do CatBoost recebido (VER0.7)
+
+A pedido da equipe, o ZIP EntregaCertaAI_VER07_Experimento foi extraído na
+branch atual `rnn-train`, em `experimentos/EntregaCertaAI_VER07/`. Os 56 arquivos
+foram comparados byte a byte com o ZIP e permanecem intactos. O estado anterior
+de código, frontend e documentação está em
+`Docs/versoes/antes_catboost_ver07_20261117.zip`; pesos MLP e tabelas históricas
+foram mantidos. Não houve commit, push ou retreinamento nesta integração.
+
+Foi integrado o piloto `pilot_Dminus1_CB07_closed_only.cbm` (111 atributos),
+conforme a seleção de validação documentada no pacote. `experimentos/preparar_ver07.py`
+reconstrói as entradas com as fontes e helpers recebidos, exige os hashes dos
+ZIPs Olist/rodovias e compara três modelos `.cbm` com as previsões originais.
+Diferença máxima: 1,11e-16. Os alertas do piloto foram reproduzidos exatamente.
+As dependências de reprodução foram separadas em `requirements-ver07.txt`,
+complementando a omissão de XGBoost nos requirements recebidos. O backend usa
+CatBoost 1.2.10; `pip check` na `.venv` passou.
+
+O novo schema `modelo_ver07.pedidos` contém 30.778 entradas: 12.175 da validação
+efetiva e 18.603 do teste histórico. Não contém alvos nem scores. A API consulta
+atributos no PostgreSQL, executa o `.cbm` e aplica cotas por dia. A tabela antiga
+`public.pedidos` continuou com 91.390 registros. Repetir a carga CatBoost retornou
+`ja_carregado=True`; nenhuma duplicação. A MLP anterior ainda consultou 24.667
+pedidos e produziu a fila original de 2.466. Hashes dos pesos e preprocessador
+MLP permaneceram iguais aos anteriores.
+
+Resultados reproduzidos do teste: 553 TP, 437 FP, 119 FN e 17.494 TN;
+precision 55,86%, recall 82,29%, F1 66,55%, AP 0,7303. São 990 alertas,
+5,32% dos 18.603 pedidos totais, mas 66,62% dos 1.486 pendentes em D−1.
+A política seleciona ceil(65% dos pendentes) em cada dia, portanto não equivale
+a 65% do lote completo. O frontend, PDF e contexto do assistente foram adaptados
+a esse denominador. Pedidos já entregues não são pontuados pelo modelo.
+
+Validações executadas: `main.py testar --postgres` concluiu **95 testes, OK**,
+incluindo reprodução real, ida e volta SQL, HTTP com autorização, PDF e contexto
+GenAI. Durante a execução houve uma alteração paralela do assistente/evidências;
+os **38 testes** de `test_*genai.py` foram reexecutados depois e passaram,
+incluindo a nova regressão de cota diária. Essas contagens se sobrepõem.
+`main.py verificar` confirmou modelo VER0.7, banco 30.778, lote 18.603 e fila 990.
+`node --check` passou nos dois scripts alterados. A função real de validação do
+frontend aceitou o payload SQL/CatBoost com 990 alertas, rejeitou uma cota diária
+inconsistente e continuou aceitando o contrato anterior da MLP. O PDF real de
+contingência foi gerado com duas páginas e indicadores conferidos por extração
+de texto. Não houve conferência visual no navegador nem chamada real à GenAI
+nesta tarefa; os testes do provedor usaram respostas simuladas.
+
+O teste da pesquisa foi reutilizado e a cota de 65% é pós-exploração. Os resultados
+são exploratórios, não prova de generalização, ROI ou redução causal de atrasos.
+A previsão ocorre perto da entrega (D−1), com menor tempo para agir; não é
+comparável diretamente à MLP na aprovação. Distâncias rodoviárias de 2024 e
+clima agregado por UF são limitações adicionais. Dados da loja demonstrativa
+continuam fora da pontuação, até haver construção operacional dos 111 atributos.
+Detalhes, métricas de validação e restauração em `Docs/modelo_ver07.md`.
+
+O guia `Docs/instalacao_novo_pc.md` agora descreve a instalação CatBoost do zero,
+sem exigir o notebook 02; o guia MLP foi preservado em `Docs/versoes/`.
+Para abrir a nova versão, reiniciar com `python main.py iniciar`. Para voltar à
+MLP, definir `ENTREGACERTA_MODELO=mlp` e reiniciar. Contas e dados anteriores
+permanecem disponíveis.
+
+
+## 17/11/2026 — notebook didático completo da VER0.7
+
+Criado `Notebooks/03_catboost_ver07.ipynb`, independente do 01/02 e dos
+experimentos antigos. São 64 células, sendo 31 de código, com explicações
+intercaladas: ambiente e fontes, auditoria de chaves/nulos, alvo por dia,
+agregação de itens/pagamentos, geolocalização, consolidação, checkpoint D−1,
+cortes temporais e maturidade, EDA do treino, históricos/fontes externas,
+CatBoost com parâmetros fixos, baseline selecionado na validação, métricas,
+nove figuras, comparação com o modelo recebido e persistência.
+
+A consolidação foi escrita explicitamente com Pandas no notebook e comparada
+com `build_base` do pacote. As rotinas de históricos e fontes externas continuam
+reutilizando os arquivos originais, com explicação e links. Isso evita criar
+outra implementação extensa dessas regras. O notebook não depende da execução
+do 02, de PostgreSQL ou de GenAI. Usa o ambiente de pesquisa `.venv-ctgan`
+(Pandas 2.3.3 e CatBoost 1.2.10), sem GAN/dados sintéticos. Novos computadores
+podem criar `.venv-ver07` via `requirements-ver07.txt`, agora com dependências
+para o kernel e execução de notebooks.
+
+A versão final foi executada em kernel limpo, de cima a baixo: 31 células de
+código numeradas de 1 a 31, nenhuma exceção, duração total de 114,7 segundos
+nesta máquina. Foram renderizados o HTML de revisão e os nove gráficos;
+inspeção visual confirmou legibilidade de abertura, resultados, matrizes,
+comparações, curva PR, importâncias e EDA. Um mês com apenas um pedido e 100%
+de atraso motivou uma correção exclusivamente visual: meses com menos de 30
+pedidos ficam sem taxa na curva, com contagens e taxas retidas na tabela de
+auditoria. Nenhum registro foi excluído do treinamento por esse ajuste.
+Avisos não fatais de tqdm/IProgress e de unidade timedelta do NumPy apareceram;
+não interromperam a execução nem alteraram a reprodução.
+
+Treino efetivo: 5.655 pedidos pendentes e maduros, com 111 atributos (12
+categóricos e 99 numéricos). Há 4.161 atrasos nesse recorte: a classe atrasada
+é majoritária aqui, diferentemente da base completa ou da MLP na aprovação.
+`Balanced` pondera a perda conforme essa população; não gera exemplos artificiais.
+Validação efetiva: 12.175 pedidos, 1.017 pendentes. Teste: 18.603, 1.486 pendentes.
+Retreinamento: diferença máxima de score de 0.0 contra o
+modelo recebido e mesma fila de 990 pedidos. TP 553, FP 437, FN 119, TN 17.494;
+precision 55,86%, recall 82,29%, F1 66,55%, AP dos pendentes 0,7303.
+O modelo recém-salvo foi recarregado e reproduziu scores e prioridades.
+
+A referência escolhida pela validação foi tempo após limite de envio, com
+F1 de 56,56% no teste. A regra alternativa de não despachado seguido de idade
+teve 66,43% no diagnóstico do pacote, mas não foi selecionada pela validação.
+Essa distinção foi explicitada em `Docs/modelo_ver07.md`; não se afirma
+superioridade estatística sobre todas as regras.
+
+Artefatos da execução final: `Modelos/notebook_ver07/20261117_171529_c0802b`:
+`catboost_treinado.cbm`, `dataset_analitico_d1.parquet`, `previsoes_teste.csv`
+e `resultados.json`. O Parquet contém alvo/metadados para estudo: somente as
+111 colunas de entrada podem ir ao modelo. Cada execução tem sua própria pasta.
+O teste reutilizado, a política pós-exploração, o enriquecimento rodoviário de
+2024 e os demais limites permanecem explícitos; não houve promoção à aplicação.
+
+Conferência externa comparou 66 arquivos anteriores (notebooks, pacote original
+e artefatos integrados): todos com hashes idênticos. O notebook também verifica
+os pesos/preprocessador MLP e os ZIPs. README, guia de instalação e registro
+VER0.7 foram atualizados. Nenhuma alteração na API, no PostgreSQL, na interface
+ou no modelo ativo foi feita nesta tarefa. Sem commit/push.

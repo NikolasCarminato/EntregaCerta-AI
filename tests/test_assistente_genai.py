@@ -76,7 +76,7 @@ class AssistenteGenAITest(unittest.TestCase):
         self.assertTrue(assistente.responder('Pergunta',{})['disponivel'])
         config=self.gerar.call_args.kwargs['config']
         self.assertEqual(config.max_output_tokens,1024)
-        self.assertIsNone(config.thinking_config)
+        self.assertEqual(config.thinking_config.thinking_level.value,'MINIMAL')
         http=self.cliente.call_args.kwargs['http_options']
         self.assertEqual(http.timeout,30000)
         self.assertEqual(http.retry_options.attempts,1)

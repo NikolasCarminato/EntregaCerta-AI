@@ -13,13 +13,15 @@ CAMPOS = [
     "valor_itens", "valor_frete", "valor_pago", "peso_total_g",
     "distancia_media_vendedores_km", "distancia_max_vendedores_km",
     "prazo_prometido_dias", "tipo_pagamento_principal", "parcelas_maximas",
+    "distancia_vendedor_referencia_km", "checkpoint_at",
 ]
 
 
 def montar_lote(pedidos, previsoes):
     """Une atributos e scores uma única vez, com conferência das chaves."""
     lote = pedidos.reindex(columns=CAMPOS).merge(
-        previsoes[["order_id", "score_atraso", "prioridade"]],
+        previsoes[["order_id", "score_atraso", "prioridade"] +
+                  [c for c in ('pendente', 'situacao_modelo') if c in previsoes]],
         on="order_id", how="outer", validate="one_to_one", indicator=True,
     )
     if lote.empty or not lote["_merge"].eq("both").all():

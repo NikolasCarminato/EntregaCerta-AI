@@ -3,6 +3,8 @@ from collections import OrderedDict
 from dataclasses import dataclass, field
 from hashlib import sha256
 import os
+import re
+import unicodedata
 from threading import Lock
 from time import monotonic
 from uuid import uuid4
@@ -68,6 +70,75 @@ def apagar(identificador, usuario):
         _conversas.pop(str(identificador), None)
 
 
+def normalizar(valor):
+    return "".join(c for c in unicodedata.normalize("NFD", valor.casefold())
+                   if unicodedata.category(c) != "Mn")
+
+
+def somente_encaminhamento(texto):
+    limpo = normalizar(re.sub(r"\[E\d+(?:[,;]\s*E\d+)*\]", "", texto))
+    caminho = any(c in limpo for c in ("meus pedidos", "conversar sobre pedido"))
+    fato_ou_limite = re.search(
+        r"\d|\b(nao|nunca|sem|somente|apenas|prazo|data|status|entreg\w*|preparac\w*|"
+        r"score|frete|responsavel|cancel\w*|extern\w*|transportadora|valor|dias?|probabilidade)\b", limpo)
+    return bool(caminho and not fato_ou_limite)
+
+
+def corrigir_reencaminhamento_sem_prazo(texto, pergunta, contexto):
+    """Corrige o caso estrito de voltar à própria tela para procurar prazo ausente."""
+    pedido = contexto.get("pedido") or {}
+    if contexto.get("fonte_dados") != "loja" or not all(
+        k in pedido and pedido[k] is None for k in ("prazo_prometido", "prazo_original")
+    ):
+        return texto, False
+    duvida = normalizar(pergunta)
+    if (not re.search(r"\b(data|prazo|chega|chegar|entrega)\b", duvida) or
+        re.search(r"\b(outro|outros|trocar|selecionar|escolher|editar|alterar|atualizar|mudar|preencher)\b", duvida)):
+        return texto, False
+    frases = separar_frases(texto)
+    restantes = [f.group() for f in frases if not somente_encaminhamento(f.group())]
+    if len(restantes) == len(frases):
+        return texto, False
+    restante = "".join(restantes).strip()
+    if restante:
+        return restante, True
+    return ("Já estamos conversando sobre este pedido. Os prazos prometido atual e original "
+            "não foram informados nesta consulta [E6, E7]."), True
+
+
+def separar_frases(texto):
+    # Ponto decimal não encerra frase; citação após ponto acompanha a frase anterior.
+    citacao = r"\[E\d+(?:[,;]\s*E\d+)*\]"
+    return list(re.finditer(r".+?(?:[.!?](?:[ \t]*" + citacao + r")*(?=\s|$)|$)", texto, re.S))
+
+
+def reduzir_orientacoes_repetidas(texto, historico, pergunta):
+    """Remove somente encaminhamentos repetidos; preserva fatos e pedidos de ajuda."""
+    # Na dúvida, manter a orientação: o usuário pode estar pedindo os passos de novo.
+    if re.search(r"\b(onde|como|caminho|passos?|botao|cliq\w*|acess\w*|abrir|rep\w*|novamente|explic\w*|entend\w*|lembr\w*|esquec\w*|ajud\w*|fazer|faco)\b|de novo|o que (e|significa|faz)\b",
+                 normalizar(pergunta)):
+        return texto, 0
+    anteriores = normalizar(" ".join(m["texto"] for m in historico if m["papel"] == "model"))
+    caminhos = ("meus pedidos", "conversar sobre pedido")
+    if not all(c in anteriores for c in caminhos):
+        return texto, 0
+
+    frases = separar_frases(texto)
+    preservadas = []
+    removidas = 0
+    for frase in frases:
+        trecho = frase.group()
+        if somente_encaminhamento(trecho):
+            removidas += 1
+        else:
+            preservadas.append(trecho)
+    restante = "".join(preservadas).strip()
+    # Não gerar resposta vazia nem fabricar texto substituto.
+    if removidas and restante:
+        return restante, removidas
+    return texto, 0
+
+
 def conversar(identificador, usuario, requisicao, pergunta, contexto, gerar):
     conversa = obter(identificador, usuario)
     if not conversa.trava.acquire(blocking=False):
@@ -95,6 +166,12 @@ def conversar(identificador, usuario, requisicao, pergunta, contexto, gerar):
             if desconhecidas:
                 return {"disponivel": False, "conversa_id": str(identificador),
                         "resposta": "A IA citou uma referência que não está nesta consulta. Tente novamente."}
+            if usuario["perfil"] == "cliente":
+                texto, removidas = reduzir_orientacoes_repetidas(resultado["resposta"], conversa.historico, pergunta)
+                texto, corrigida = corrigir_reencaminhamento_sem_prazo(texto, pergunta, contexto)
+                resultado = {**resultado, "resposta": texto, "orientacoes_repetidas_removidas": removidas,
+                             "orientacao_corrigida_com_contexto": corrigida}
+                citadas, _ = conferir_referencias(texto, evidencias)
             # O provedor não escolhe a fonte, o horário nem os valores exibidos.
             resultado["evidencias"] = {**evidencias, "citadas": citadas}
             resultado["resposta_id"] = str(uuid4())

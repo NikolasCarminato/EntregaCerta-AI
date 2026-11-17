@@ -51,10 +51,16 @@ def indicadores(dados):
     total, quantidade = dados['pedidos_avaliados'], dados['pedidos_na_fila']
     fracao = float(dados['fracao_fila'])
     scores = [float(p['score_atraso']) for p in dados['fila']]
+    diaria = dados.get('politica_fila') == 'cota_diaria_pendentes'
+    if diaria:
+        from .catboost_ver07 import validar_cota
+        cota_valida = validar_cota(dados)
+    else:
+        cota_valida = int(total * fracao) == quantidade
     if (not isinstance(total, int) or total < 0 or not isinstance(quantidade, int)
             or quantidade != len(scores) or not 0 <= quantidade <= total
             or not math.isfinite(fracao) or not 0 <= fracao <= 1
-            or int(total * fracao) != quantidade
+            or not cota_valida
             or any(not math.isfinite(s) or not 0 <= s <= 1 for s in scores)):
         raise ValueError('Resultados inconsistentes para o relatório.')
     faixas = [0] * 10
@@ -64,12 +70,14 @@ def indicadores(dados):
         'contexto': str(dados['contexto']), 'pedidos_avaliados': total,
         'pedidos_na_fila': quantidade, 'fora_da_fila': total - quantidade,
         'fracao_configurada': fracao,
+        'base_capacidade': dados.get('base_capacidade', 'do lote completo'),
+        'regra_fila': dados.get('regra', 'Fração configurada do lote por score decrescente.'),
         'fracao_efetiva': quantidade / total if total else 0,
         'maior_score': max(scores) if scores else None,
         'score_medio': mean(scores) if scores else None,
         'score_mediano': median(scores) if scores else None,
         'histograma_fila': faixas,
-        'observacao': 'Score de risco relativo, não uma probabilidade calibrada. Estar na fila não confirma atraso.',
+        'observacao': dados.get('observacao', 'Score de risco relativo, não uma probabilidade calibrada. Estar na fila não confirma atraso.'),
     }
 
 
@@ -127,7 +135,7 @@ def gerar_relatorio(analise_id, usuario_id):
         # A LLM recebe somente os indicadores necessários para redigir o resumo.
         contexto_resumo = {chave: fatos[chave] for chave in (
             'contexto', 'pedidos_avaliados', 'pedidos_na_fila', 'fora_da_fila',
-            'fracao_configurada', 'maior_score', 'score_medio', 'score_mediano', 'observacao',
+            'fracao_configurada', 'base_capacidade', 'regra_fila', 'maior_score', 'score_medio', 'score_mediano', 'observacao',
         )}
         try:
             resposta = responder(prompt, contexto_resumo, para_relatorio=True)
@@ -239,7 +247,7 @@ def montar_pdf(fatos, resumo, genai, analise_id, analisado_em):
     doc = SimpleDocTemplate(saida,pagesize=A4,rightMargin=40,leftMargin=40,topMargin=76,bottomMargin=60,
                             title='EntregaCerta AI - Relatório de priorização',author='Equipe EntregaCerta AI')
     blocos = [paragrafo('Uma visão da fila.\nUm ponto de partida para agir.','titulo'),
-              paragrafo('Resultados da análise histórica de validação. O relatório considera a fila completa; busca, ordenação e paginação da tela não alteram estes indicadores.','nota'),
+              paragrafo(f"{fatos['contexto']}. O relatório considera a fila completa; filtros da tela não alteram estes indicadores.",'nota'),
               paragrafo('Análise: '+hora(analisado_em)+' | PDF: '+hora(gerado_em)+' (Brasília)','nota')]
     itens = [('Pedidos avaliados',numero(fatos['pedidos_avaliados'])),('Pedidos na fila',numero(fatos['pedidos_na_fila'])),
              ('Capacidade configurada',decimal(100*fatos['fracao_configurada'],1)+'%'),('Maior score da fila',decimal(fatos['maior_score'])),
@@ -260,10 +268,11 @@ def montar_pdf(fatos, resumo, genai, analise_id, analisado_em):
     blocos.append(paragrafo(texto))
     blocos.extend([paragrafo('O que estes resultados permitem afirmar','subtitulo'),
                    paragrafo(f"Foram avaliados {numero(fatos['pedidos_avaliados'])} pedidos, dos quais {numero(fatos['pedidos_na_fila'])} entraram na fila ({decimal(100*fatos['fracao_efetiva'],2)}% do lote). Essa proporção é a cobertura operacional da fila, não a taxa de atraso."),
+                   paragrafo(f"Capacidade configurada: {decimal(100*fatos['fracao_configurada'],1)}% {fatos['base_capacidade']}. {fatos['regra_fila']}",'nota'),
                    paragrafo('Como utilizar','subtitulo'),
                    paragrafo('Use a fila para organizar a revisão. Antes de agir, confira o prazo e os dados do pedido nas fontes operacionais. Registre as decisões humanas e acompanhe seus resultados; esta análise histórica não comprova redução de atrasos.'),
                    paragrafo('Limites e origem dos dados','subtitulo'),
-                   paragrafo('Fonte: registros reais e anonimizados da base pública Olist (2016-2018), na partição de validação do projeto. Os pedidos fictícios da loja e do rastreio demonstrativo não compõem este relatório.','nota'),
+                   paragrafo('Fonte: registros reais e anonimizados Olist (2016-2018), na coorte histórica identificada no início. Os pedidos fictícios da loja não compõem este relatório. '+fatos['observacao'],'nota'),
                    paragrafo('A classificação usa o modelo já carregado pela aplicação. Não houve treinamento ou nova inferência durante a exportação. Faltam rótulos observados neste resumo para calcular precision, recall, F1 ou acurácia; por isso essas métricas não são apresentadas.','nota'),
                    paragrafo('A GenAI recebe somente indicadores agregados, sem identificadores de pedidos, nomes ou e-mails. O texto gerado pode conter erros e deve ser revisado. Os números e os gráficos são calculados pelo código, independentemente da resposta da IA.','nota'),
                    paragrafo('Identificação da análise: '+analise_id,'nota')])

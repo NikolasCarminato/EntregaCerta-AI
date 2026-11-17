@@ -87,7 +87,7 @@
     salvar(p);
     $("orders-total").textContent = inteiro.format(dados.total);
     $("orders-priority").textContent = inteiro.format(dados.na_fila);
-    $("orders-capacity").textContent = `${decimal.format(dados.fracao_fila * 100)}% do lote · seleção original`;
+    $("orders-capacity").textContent = `${decimal.format(dados.fracao_fila * 100)}% ${dados.base_capacidade || "do lote"} · seleção original`;
     $("orders-filtered").textContent = inteiro.format(dados.filtrados);
     $("orders-filtered-priority").textContent = inteiro.format(dados.filtrados_na_fila);
     $("orders-updated").textContent = "Lote consultado em " + new Date(dados.consultado_em).toLocaleString("pt-BR");
@@ -120,7 +120,9 @@
       const preenchimento = document.createElement("i");
       preenchimento.style.width = `${pedido.score_atraso * 100}%`;
       barra.append(preenchimento);
-      risco.append(texto("strong", score.format(pedido.score_atraso), "orders-score-value"), barra);
+      const naoPontuado = pedido.situacao_modelo && pedido.situacao_modelo !== "pontuado_em_D-1";
+      risco.append(texto("strong", naoPontuado ? "Não pontuado" : score.format(pedido.score_atraso), "orders-score-value"), barra);
+      if (naoPontuado) risco.append(texto("small", "Já entregue ou fora do checkpoint", "orders-cell-note"));
       const fila = document.createElement("td"); fila.append(badge(pedido));
       const acao = document.createElement("td");
       const botao = texto("button", "Detalhes ↗", "orders-detail-button");
@@ -171,7 +173,7 @@
   function abrir(pedido, origem) {
     aberto = pedido; gatilho = origem;
     $("orders-detail-id").textContent = pedido.order_id;
-    $("orders-detail-score").textContent = score.format(pedido.score_atraso);
+    $("orders-detail-score").textContent = pedido.situacao_modelo && pedido.situacao_modelo !== "pontuado_em_D-1" ? "Não pontuado" : score.format(pedido.score_atraso);
     const etiqueta = badge(pedido);
     $("orders-detail-queue").className = etiqueta.className;
     $("orders-detail-queue").textContent = etiqueta.textContent;
@@ -182,6 +184,7 @@
       ["Informações logísticas", [["Prazo prometido", numero(pedido.prazo_prometido_dias, decimal, " dias")], ["Peso total", numero(pedido.peso_total_g, decimal, " g")], ["Distância média dos vendedores", numero(pedido.distancia_media_vendedores_km, decimal, " km")], ["Distância máxima dos vendedores", numero(pedido.distancia_max_vendedores_km, decimal, " km")]]],
     ];
     const destino = $("orders-detail-fields"); destino.replaceChildren();
+    if (pedido.checkpoint_at) grupos.push(["Checkpoint do modelo", [["Instante histórico D−1", dataOlist(pedido.checkpoint_at, true)], ["Situação", pedido.situacao_modelo || "Não informado"], ["Distância do vendedor de referência", numero(pedido.distancia_vendedor_referencia_km, decimal, " km")], ["Origem e categoria", "Vendedor e item de referência; não representa necessariamente todos os vendedores."]]]);
     for (const [titulo, campos] of grupos) {
       const secao = texto("section", "", "orders-detail-section"); secao.append(texto("h3", titulo));
       const lista = document.createElement("dl");

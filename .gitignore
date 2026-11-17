@@ -1,6 +1,7 @@
 # Ambiente e segredos locais
 .venv/
 .venv-ctgan/
+.venv-ver07/
 # Artefatos volumosos do experimento; notebooks e código continuam versionados.
 Modelos/experimento_ctgan/
 Modelos/experimento_historicos/

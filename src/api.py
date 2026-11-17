@@ -1,4 +1,5 @@
 # Iniciar a aplicação pela raiz: .\.venv\Scripts\python.exe main.py iniciar
+#.\.venv\Scripts\python.exe -m uvicorn src.api:app --reload --host 127.0.0.1 --port 8000
 
 from pydantic import BaseModel, Field, ConfigDict
 from .assistente_genai import responder
@@ -106,16 +107,36 @@ def obter_modelos():
     return carregar_modelos()
 
 
+def entradas_modelo(pacote):
+    if pacote.get('tipo') == 'catboost_ver07':
+        from .catboost_ver07 import consultar
+        return consultar(pacote)
+    return consultar_pedidos('validacao')
+
+
+def descricao_modelo(pacote, resultado):
+    if pacote.get('tipo') == 'catboost_ver07':
+        from .catboost_ver07 import descrever
+        return descrever(pacote, resultado)
+    return {'contexto': 'Demonstração histórica — validação Olist',
+            'modelo': 'MLP anterior', 'politica_fila': 'fracao_lote',
+            'base_capacidade': 'do lote completo',
+            'regra': 'Selecionar a fração configurada do lote por score decrescente.',
+            'observacao': 'O score indica risco relativo, não uma probabilidade calibrada.'}
+
+
 # Um lote em memória por processo; filtros não consultam nem pontuam novamente.
 _trava_lote = Lock()
 
 
 @lru_cache(maxsize=1)
 def obter_lote_pedidos():
-    pedidos = consultar_pedidos("validacao")
     pacote, modelo = obter_modelos()
+    pedidos = entradas_modelo(pacote)
     previsoes = priorizar_pedidos(prever_pedidos(pedidos, pacote, modelo), pacote["fracao_fila"])
-    return montar_lote(pedidos, previsoes), datetime.now(timezone.utc).isoformat(), float(pacote["fracao_fila"])
+    lote = montar_lote(pedidos, previsoes)
+    lote.attrs['modelo'] = descricao_modelo(pacote, previsoes)
+    return lote, datetime.now(timezone.utc).isoformat(), float(pacote["fracao_fila"])
 
 
 @app.get("/api/pedidos")
@@ -148,7 +169,7 @@ def consultar_lista_pedidos(
             score_min=score_min, score_max=score_max, ordem=ordem,
         )
         return {**resposta, "consultado_em": consultado_em, "fracao_fila": fracao,
-                "contexto": "Demonstração histórica — validação Olist"}
+                **lote.attrs.get('modelo', {'contexto': 'Demonstração histórica — validação Olist'})}
     except Exception:
         logging.exception("Falha ao consultar o catálogo de pedidos.")
         raise HTTPException(503, "Não foi possível consultar os pedidos. Tente atualizar o lote.") from None
@@ -157,11 +178,9 @@ def consultar_lista_pedidos(
 @app.get("/api/prioridades")
 def consultar_prioridades(request: Request = None):
     try:
-        # 1. Busca os pedidos reais de validação.
-        pedidos = consultar_pedidos("validacao")
-
-        # 2. Executa o tratamento, o modelo e a priorização.
+        # Consulta as entradas da coorte compatível com o modelo ativo.
         pacote, modelo = obter_modelos()
+        pedidos = entradas_modelo(pacote)
         previsoes = prever_pedidos(pedidos, pacote, modelo)
         resultado = priorizar_pedidos(
             previsoes,
@@ -178,15 +197,11 @@ def consultar_prioridades(request: Request = None):
 
         # 4. Devolve os dados para o frontend.
         dados = {
-            "contexto": "Demonstracao historica — validacao Olist",
+            **descricao_modelo(pacote, resultado),
             "pedidos_avaliados": len(resultado),
             "pedidos_na_fila": len(fila),
             "fracao_fila": float(pacote["fracao_fila"]),
-            "observacao": (
-                "O score indica prioridade relativa de risco; "
-                "nao representa uma probabilidade calibrada."
-            ),
-            "fila": fila.to_dict(orient="records"),
+            "fila": fila[['order_id', 'score_atraso', 'prioridade']].to_dict(orient="records"),
         }
         if request is not None:
             dados.update(registrar_analise(dados, request.state.usuario["id"]))
@@ -235,10 +250,10 @@ def contexto_assistente(usuario, pedido=None):
         registro = lote.loc[lote["order_id"].eq(pedido["id"])].drop(columns="order_id")
         if registro.empty:
             raise HTTPException(404, "Pedido não encontrado.")
-        return {"publico": "analista", "fonte_dados": "olist", "contexto": "Pedido histórico Olist — partição de validação",
+        return {"publico": "analista", "fonte_dados": "olist", "contexto": lote.attrs.get('modelo', {}).get('contexto', 'Pedido histórico Olist'),
                 "pedido": json.loads(registro.to_json(orient="records", date_format="iso"))[0],
                 "consultado_em": consultado_em,
-                "limites": "Score é risco relativo, não probabilidade calibrada. Atributos não comprovam causas do atraso. Sem previsão de data individual ou alteração de pedido."}
+                "limites": "Score é risco relativo, não probabilidade calibrada. Atributos não comprovam causas do atraso. Zero para pedido não pontuado é convenção, não estimativa de risco. UF de origem e categoria usam vendedor/item de referência na VER0.7. Sem previsão de data individual ou alteração de pedido."}
     if usuario["perfil"] == "cliente":
         return {
             "publico": "cliente",
@@ -261,10 +276,8 @@ def contexto_assistente(usuario, pedido=None):
             100 * dados["fracao_fila"]
         ),
         "observacao": dados["observacao"],
-        "regra": (
-            "A fila prioriza os pedidos "
-            "com maiores scores do modelo."
-        )
+        "regra": dados.get('regra', 'A fila prioriza os pedidos com maiores scores do modelo.'),
+        **{k: dados[k] for k in ('politica_fila', 'base_capacidade', 'pendentes_avaliados', 'limites_diarios', 'modelo') if k in dados},
     }
 
 @app.post("/api/assistente/conversas")

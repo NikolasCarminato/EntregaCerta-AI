@@ -2,7 +2,7 @@
 from copy import deepcopy
 from datetime import date, datetime, timedelta, timezone
 import re
-from decimal import Decimal, ROUND_FLOOR
+from decimal import Decimal, ROUND_FLOOR, ROUND_CEILING
 from zoneinfo import ZoneInfo
 
 
@@ -50,11 +50,17 @@ CAMPOS = [
     ("pedidos_fora_fila", "Pedidos fora da fila (total menos selecionados)", "numero"),
     ("informacoes_ausentes", "Informações não fornecidas nesta consulta", "texto"),
     ("simulacao_fila", "Simulação solicitada da capacidade (cálculo do servidor)", "texto"),
+    ("base_capacidade", "Base da capacidade configurada", "texto"),
+    ("pendentes_avaliados", "Pedidos ainda pendentes em D−1", "numero"),
+    ("modelo", "Modelo utilizado", "texto"),
+    ("pedido.checkpoint_at", "Checkpoint histórico da previsão", "data_hora"),
+    ("pedido.situacao_modelo", "Situação da pontuação", "texto"),
+    ("pedido.distancia_vendedor_referencia_km", "Distância do vendedor de referência (km)", "numero"),
 ]
 FONTES = {
     "loja": "Loja demonstrativa · registros autorizados do PostgreSQL",
-    "olist": "Olist · pedido histórico da validação (registros de 2016–2018)",
-    "fila": "Olist · resumo da fila histórica de validação (2016–2018)",
+    "olist": "Olist · pedido da coorte histórica indicada no contexto (2016–2018)",
+    "fila": "Olist · resumo da fila da coorte histórica indicada no contexto (2016–2018)",
     "orientacoes": "Orientações e regras da aplicação · sem pedido selecionado",
 }
 REFERENCIA = re.compile(r"\[(E\d+(?:\s*[,;]\s*E\d+)*)\]")
@@ -84,7 +90,7 @@ def calendario_prazo(valor, referencia, rotulo):
     )
 
 
-def simular_capacidade(pergunta, total):
+def simular_capacidade(pergunta, total, pendentes_por_dia=None):
     """Só interpreta um percentual explicitamente ligado à capacidade total."""
     if type(total) is not int or total < 0:
         return None
@@ -92,17 +98,26 @@ def simular_capacidade(pergunta, total):
         return None  # Subgrupo explícito: não presumir que a base é o lote inteiro.
     valores = re.findall(r"(?<![\d.,-])(\d+(?:[.,]\d+)?)\s*%", pergunta)
     if len(valores) != 1 or not re.search(
-        r"(?:fila\s+(?:para|de)|capacidade(?:\s+de)?|revisar)\s+\d+(?:[.,]\d+)?\s*%", pergunta, re.I
+        r"(?:fila\s+(?:para|de)|capacidade(?:\s+(?:for|fosse|ficar|ficasse|passar))?(?:\s+(?:de|para|em))?|revisar)\s+\d+(?:[.,]\d+)?\s*%", pergunta, re.I
     ):
         return None  # Pergunta ambígua ou vários percentuais: não inventar intenção.
     percentual = Decimal(valores[0].replace(',', '.'))
     if not 0 <= percentual <= 100:
         return None
+    if pendentes_por_dia is not None:
+        if re.search(r'lote inteiro|total de pedidos|todos os pedidos', pergunta, re.I):
+            return 'A política ativa aplica a cota aos pendentes de cada dia, não ao lote completo. Uma cota global seria outra política e não alterará esta fila.'
+        pendentes = sum(d['pendentes'] for d in pendentes_por_dia)
+        quantidade = sum(int((Decimal(d['pendentes']) * percentual / 100).to_integral_value(rounding=ROUND_CEILING)) for d in pendentes_por_dia)
+        return (f'Hipótese: cota diária de {percentual}% sobre os {pendentes} pedidos pendentes distribuídos pelos dias históricos. '
+                f'Somando ceil(pendentes_do_dia × {percentual}/100): {quantidade} alertas. '
+                'O arredondamento para cima ocorre em cada dia. Não altera a fila, não calcula recall ou atrasos evitados.')
     exato = Decimal(total) * percentual / 100
     quantidade = int(exato.to_integral_value(rounding=ROUND_FLOOR))
     return (
         f"Hipótese solicitada na pergunta: {percentual}% do total de {total} pedidos avaliados. "
-        f"Cálculo: {total} x {percentual} / 100 = {exato}; arredondando para baixo: {quantidade} pedidos. "
+        f"Resultado exato: {total} x {str(percentual).replace('.', ',')} / 100 = {str(exato).replace('.', ',')}. "
+        f"Quantidade operacional após arredondar para baixo: {quantidade} pedidos. "
         "A base é o lote inteiro, não a fila atualmente selecionada. "
         "Esta simulação não altera a fila e não mede precisão, recall ou atrasos evitados."
     )
@@ -175,7 +190,8 @@ def contextualizar(contexto, perfil, *, agora=None, pergunta=""):
         total, fila = contexto.get("pedidos_avaliados"), contexto.get("pedidos_na_fila")
         if type(total) is int and type(fila) is int and 0 <= fila <= total:
             contexto["pedidos_fora_fila"] = total - fila
-        simulacao = simular_capacidade(pergunta, total)
+        dias = contexto.get('limites_diarios') if contexto.get('politica_fila') == 'cota_diaria_pendentes' else None
+        simulacao = simular_capacidade(pergunta, total, dias)
         if simulacao is not None:
             contexto["simulacao_fila"] = simulacao
     return contexto

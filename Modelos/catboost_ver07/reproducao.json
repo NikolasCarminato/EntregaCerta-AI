@@ -1,0 +1,96 @@
+{
+  "models": {
+    "pilot_Dminus1_CB07_closed_only.cbm": {
+      "max_score_diff": 1.1102230246251565e-16,
+      "alerts_equal": true,
+      "features": 111,
+      "sha256": "f3ef22efd8fb1c5646b849e5904358bd75f0766b639cca6c36d8c78a01f6b6a9"
+    },
+    "pilot_Dminus1_CB07_with_mql.cbm": {
+      "max_score_diff": 1.1102230246251565e-16,
+      "features": 114,
+      "sha256": "f76188205f1635300e47999d6db1980086fbfd8806a45fd239b5d3e3ff40fd14"
+    },
+    "Dminus1_winner_CB06.cbm": {
+      "max_score_diff": 1.1102230246251565e-16,
+      "features": 95,
+      "sha256": "2072adc3eec2a48e78ea6bfd877ebe975c381571e02efa6622057ef4bc8c828d"
+    }
+  },
+  "metrics": {
+    "validacao": {
+      "n": 12175,
+      "positives": 674,
+      "precision": 0.7058823529411765,
+      "recall": 0.712166172106825,
+      "f1": 0.7090103397341211,
+      "tp": 480,
+      "fp": 200,
+      "fn": 194,
+      "tn": 11301,
+      "alerts": 680,
+      "accuracy": 0.9676386036960986,
+      "average_precision_all": 0.7553025824081938,
+      "average_precision_pending": 0.7553025824081939,
+      "pending": 1017,
+      "fraction_alerts_all": 0.05585215605749486,
+      "fraction_alerts_pending": 0.6686332350049164
+    },
+    "teste": {
+      "n": 18603,
+      "positives": 672,
+      "precision": 0.5585858585858586,
+      "recall": 0.8229166666666666,
+      "f1": 0.6654632972322503,
+      "tp": 553,
+      "fp": 437,
+      "fn": 119,
+      "tn": 17494,
+      "alerts": 990,
+      "accuracy": 0.9701123474708381,
+      "average_precision_all": 0.7303459897804898,
+      "average_precision_pending": 0.7303459897804897,
+      "pending": 1486,
+      "fraction_alerts_all": 0.053217223028543786,
+      "fraction_alerts_pending": 0.6662180349932705
+    }
+  },
+  "sources_sha256": {
+    "logistic-brazilian-dataset.zip": "967e41e04fc306fe604e2a693f488995a8b41e5047418f8a5c8e4abd6deca784",
+    "dist_brasil.zip": "cc5b8bd29b95d35472db91c9792a7a7220a6a6acc44f6046ec84a7a0c1c78819"
+  },
+  "coverage": {
+    "marketing": {
+      "rows_in_source": 842,
+      "covered_orders_with_prior_win": 4409,
+      "covered_pct": 4.570332745931378
+    },
+    "roads": {
+      "road_file_rows_examined": 15481830,
+      "unique_requested_pairs": 3427,
+      "matched_orders": 15145,
+      "matched_pct": 15.699181092567638,
+      "network_date": "May 2024 - not historically faithful to 2016-2018",
+      "unique_municipios": 83,
+      "ambiguous_city_state_keys": 0,
+      "seller_code_coverage_pct": 70.3016481807816,
+      "customer_code_coverage_pct": 58.53011298849383
+    },
+    "weather": {
+      "weather_rows": 29592,
+      "weather_publication_delay": "explicit available_at, else date + 7d",
+      "spatial_resolution": "state proxy, not actual location",
+      "seller_weather_coverage_pct": 100.0,
+      "customer_weather_coverage_pct": 99.99274385819426
+    }
+  },
+  "test_reused": true,
+  "quota_post_hoc": true,
+  "training_executed": false,
+  "runtime_versions": {
+    "numpy": "2.5.4",
+    "pandas": "2.3.3",
+    "catboost": "1.2.10",
+    "scikit-learn": "1.9.1"
+  }
+}

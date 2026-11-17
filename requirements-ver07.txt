@@ -1,0 +1,11 @@
+# Ambiente separado para reproduzir os scripts recebidos; não é o backend.
+-r experimentos/EntregaCertaAI_VER07/requirements_ver07.txt
+# Importado por support/olist_checkpoint.py, mas ausente na lista recebida.
+xgboost>=2,<4
+pyarrow
+# Kernel e execução sequencial do notebook didático VER0.7.
+catboost==1.2.10
+matplotlib>=3.9,<4
+ipykernel>=6,<8
+nbformat>=5,<6
+nbclient>=0.10,<1

@@ -1,0 +1,9 @@
+{
+  "saved_model_reproduced": true,
+  "max_probability_abs_diff": 1.1102230246251565e-16,
+  "policy_reproduced": true,
+  "original_olist_sha256_unchanged": true,
+  "n_prediction_rows": 18603,
+  "n_model_scored_pending": 1486,
+  "feature_count": 111
+}

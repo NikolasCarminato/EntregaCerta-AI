@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="/static/conta.css?v=2">
   <script src="/static/assistente.js?v=1" defer></script>
 <script src="/static/auth.js?v=2" defer></script>
-  <script src="/static/script.js?v=2.20" defer></script>
+  <script src="/static/script.js?v=2.21" defer></script>
 <script src="/static/operacao.js?v=2" defer></script>
   <script src="/static/relatorio.js?v=1" defer></script>
 </head>
@@ -50,7 +50,7 @@
       <div class="metrics-grid" aria-label="Indicadores da análise">
         <article class="metric"><div class="metric-top"><span>Pedidos avaliados</span><span class="metric-symbol" aria-hidden="true">↗</span></div><strong id="total">—</strong><p>Pedidos consultados no lote</p></article>
         <article class="metric metric-highlight" style="--reveal-delay: 70ms"><div class="metric-top"><span>Na fila de análise</span><span class="metric-symbol" aria-hidden="true">✳</span></div><strong id="prioritarios">—</strong><p>Selecionados para revisão humana</p></article>
-        <article class="metric" style="--reveal-delay: 140ms"><div class="metric-top"><span>Capacidade da fila</span><span class="metric-symbol" aria-hidden="true">◔</span></div><strong id="capacidade">—</strong><p>Fração configurada do lote</p></article>
+        <article class="metric" style="--reveal-delay: 140ms"><div class="metric-top"><span>Capacidade da fila</span><span class="metric-symbol" aria-hidden="true">◔</span></div><strong id="capacidade">—</strong><p id="capacidade-base">Base da capacidade informada pelo modelo</p></article>
         <article class="metric" style="--reveal-delay: 210ms"><div class="metric-top"><span>Maior score da fila</span><span class="metric-symbol" aria-hidden="true">↗</span></div><strong id="maior-score">—</strong><p>Escala de 0 a 1 · risco relativo</p></article>
       </div>
 
@@ -80,7 +80,7 @@
         <aside class="insights-column" id="leitura-risco" aria-label="Contexto dos resultados">
           <section class="distribution-panel"><div class="aside-heading"><span class="eyebrow">LEITURA DA FILA</span><span aria-hidden="true">↗</span></div><h3>O risco em<br> perspectiva.</h3><p class="aside-description">Distribuição dos scores dos pedidos selecionados.</p><div id="score-distribution" class="score-distribution"><p class="distribution-placeholder">A distribuição será calculada com os resultados da análise.</p></div><p id="distribution-caption" class="distribution-caption">Somente a fila priorizada. Este gráfico não mede acurácia.</p></section>
           <section class="interpretation-panel"><span class="interpretation-icon" aria-hidden="true">i</span><h3>Score não é certeza.</h3><p id="observacao">O score ordena o risco relativo. Um valor de 0,8 não significa 80% de chance de atraso.</p><a href="/#como-funciona">Entenda a leitura <span aria-hidden="true">↗</span></a></section>
-          <div class="dataset-note"><span class="tiny-cross" aria-hidden="true">+</span><p id="contexto">Olist · demonstração histórica de validação</p><span class="tiny-cross" aria-hidden="true">+</span></div>
+          <div class="dataset-note"><span class="tiny-cross" aria-hidden="true">+</span><p id="contexto">Olist · demonstração histórica do modelo ativo</p><span class="tiny-cross" aria-hidden="true">+</span></div>
         </aside>
       </div>
     </section>

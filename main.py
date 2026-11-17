@@ -10,14 +10,16 @@ import time
 RAIZ = Path(__file__).resolve().parent
 TABELAS = ('pedidos', 'clientes', 'logistica', 'pagamentos', 'qualidade_dados', 'avaliacoes')
 ARQUIVOS = (
-    '.env', 'Modelos/preprocessador_rede.joblib', 'Modelos/rede_neural.pt',
+    '.env',
     'Dados/Brazilian Logistic/olist_products_dataset.csv',
     'Dados/Brazilian Logistic/olist_order_items_dataset.csv',
 )
 
 
 def conferir_arquivos():
-    faltantes = [nome for nome in ARQUIVOS if not (RAIZ / nome).is_file()]
+    from src.inferencia import tipo_modelo
+    modelos = ('Modelos/catboost_ver07/config.json', 'Modelos/catboost_ver07/modelo.cbm') if tipo_modelo() == 'catboost_ver07' else ('Modelos/preprocessador_rede.joblib', 'Modelos/rede_neural.pt')
+    faltantes = [nome for nome in ARQUIVOS + modelos if not (RAIZ / nome).is_file()]
     if faltantes:
         raise ValueError('Arquivos ausentes: ' + ', '.join(faltantes) + '. Consulte Docs/instalacao_novo_pc.md.')
 
@@ -68,6 +70,9 @@ def precisa_carga(contagens):
 
 
 def preparar_banco(args):
+    from src.inferencia import tipo_modelo
+    if tipo_modelo() == 'catboost_ver07':
+        return preparar_catboost(args)
     ligar_banco(args.sem_docker)
     from src.banco import carregar, obter_conexao
     from src.acesso_web import inicializar
@@ -83,13 +88,26 @@ def preparar_banco(args):
     print('View e tabelas web prontas. Contas, pedidos da loja e histórico preservados.')
 
 
+def preparar_catboost(args):
+    ligar_banco(args.sem_docker)
+    from src.catboost_ver07 import carregar_banco
+    from src.acesso_web import inicializar
+    resultado = carregar_banco()
+    inicializar()
+    print(f"CatBoost: {resultado['pedidos']} entradas em modelo_ver07; já carregado={resultado['ja_carregado']}.")
+    print('Tabelas anteriores, contas e modelos MLP preservados.')
+
+
 def conferir_banco():
     from src.banco import obter_conexao
+    from src.inferencia import tipo_modelo
+    tabela_modelo = 'modelo_ver07.pedidos' if tipo_modelo() == 'catboost_ver07' else 'public.vw_pedidos_inferencia'
     with obter_conexao() as conn:
-        for tabela in ['public.vw_pedidos_inferencia', 'app_web.usuarios', 'app_web.assistente_feedback']:
+        for tabela in [tabela_modelo, 'app_web.usuarios', 'app_web.assistente_feedback']:
             if conn.execute('SELECT to_regclass(%s)', (tabela,)).fetchone()[0] is None:
                 raise ValueError('Banco ainda não preparado. Execute: python main.py preparar-banco')
-        total = conn.execute('SELECT COUNT(*) FROM public.vw_pedidos_inferencia').fetchone()[0]
+        from psycopg import sql
+        total = conn.execute(sql.SQL('SELECT COUNT(*) FROM {}').format(sql.Identifier(*tabela_modelo.split('.')))).fetchone()[0]
         if total == 0:
             raise ValueError('Base histórica vazia. Execute: python main.py preparar-banco')
     return total
@@ -121,10 +139,14 @@ def verificar(_args):
     total = conferir_banco()
     from src.banco import consultar_pedidos
     from src.inferencia import carregar_modelos, prever_pedidos, priorizar_pedidos
-    pedidos = consultar_pedidos('validacao')
     pacote, modelo = carregar_modelos()
+    if pacote.get('tipo') == 'catboost_ver07':
+        from src.catboost_ver07 import consultar
+        pedidos = consultar(pacote)
+    else:
+        pedidos = consultar_pedidos('validacao')
     resultado = priorizar_pedidos(prever_pedidos(pedidos, pacote, modelo), pacote['fracao_fila'])
-    print(f'Banco: {total} pedidos. Validação: {len(resultado)}. Fila: {int(resultado.prioridade.sum())}.')
+    print(f"Modelo: {pacote.get('versao', 'MLP anterior')}. Banco do modelo: {total}. Lote: {len(resultado)}. Fila: {int(resultado.prioridade.sum())}.")
     print('PostgreSQL, pré-processamento e modelo carregado funcionando. GenAI não consultada.')
 
 
@@ -145,6 +167,7 @@ def main():
     for nome, funcao, ajuda in [
         ('iniciar', iniciar, 'Abrir o sistema com o modelo salvo; uso diário.'),
         ('preparar-banco', preparar_banco, 'Primeira carga e atualização segura do esquema web.'),
+        ('preparar-catboost', preparar_catboost, 'Carregar as entradas D-1 verificadas em schema próprio; preserva a MLP.'),
     ]:
         comando = sub.add_parser(nome, help=ajuda)
         comando.add_argument('--sem-docker', action='store_true', help='Usar PostgreSQL já iniciado ou externo.')

@@ -84,7 +84,19 @@ function validarResposta(dados) {
   if (!Number.isSafeInteger(dados.pedidos_na_fila) || dados.pedidos_na_fila < 0) throw erro();
   if (!Number.isFinite(dados.fracao_fila) || dados.fracao_fila < 0 || dados.fracao_fila > 1) throw erro();
   if (dados.pedidos_na_fila !== dados.fila.length || dados.pedidos_na_fila > dados.pedidos_avaliados) throw erro();
-  if (Math.floor(dados.pedidos_avaliados * dados.fracao_fila) !== dados.pedidos_na_fila) throw erro();
+  if (dados.politica_fila === "cota_diaria_pendentes") {
+    if (!Array.isArray(dados.limites_diarios)) throw erro();
+    let pendentes = 0, selecionados = 0;
+    const dias = new Set();
+    for (const dia of dados.limites_diarios) {
+      if (!dia || typeof dia.data !== "string" || dias.has(dia.data)
+        || !Number.isSafeInteger(dia.pendentes) || dia.pendentes < 1
+        || dia.selecionados !== Math.ceil(dia.pendentes * dados.fracao_fila)) throw erro();
+      dias.add(dia.data); pendentes += dia.pendentes; selecionados += dia.selecionados;
+    }
+    if (pendentes !== dados.pendentes_avaliados || pendentes > dados.pedidos_avaliados
+      || selecionados !== dados.pedidos_na_fila) throw erro();
+  } else if (Math.floor(dados.pedidos_avaliados * dados.fracao_fila) !== dados.pedidos_na_fila) throw erro();
   if (typeof dados.contexto !== "string" || !dados.contexto.trim()) throw erro();
   if (typeof dados.observacao !== "string" || !dados.observacao.trim()) throw erro();
 
@@ -190,6 +202,8 @@ function atualizarIndicadores() {
   elementos.total.textContent = formatoInteiro.format(dados.pedidos_avaliados);
   elementos.prioritarios.textContent = formatoInteiro.format(dados.pedidos_na_fila);
   elementos.capacidade.textContent = formatoPercentual.format(dados.fracao_fila);
+  const baseCapacidade = document.getElementById("capacidade-base");
+  if (baseCapacidade) baseCapacidade.textContent = dados.base_capacidade || "Fração configurada do lote";
   elementos.maiorScore.textContent = dados.fila.length ? formatoScore.format(dados.fila[0].score_atraso) : "—";
   elementos.contexto.textContent = dados.contexto;
   elementos.observacao.textContent = dados.observacao;
@@ -323,7 +337,7 @@ function abrirDetalhe(pedido, gatilho) {
   document.getElementById("detalhe-score").textContent = formatoScore.format(pedido.score_atraso);
   document.getElementById("detalhe-posicao").textContent = formatoInteiro.format(pedido.posicao);
   document.getElementById("detalhe-total").textContent = formatoInteiro.format(estado.dados.fila.length);
-  document.getElementById("detalhe-capacidade").textContent = formatoPercentual.format(estado.dados.fracao_fila);
+  document.getElementById("detalhe-capacidade").textContent = `${formatoPercentual.format(estado.dados.fracao_fila)} ${estado.dados.base_capacidade || "do lote"}`;
   elementos.feedbackDetalhe.textContent = "";
   elementos.dialogo.querySelector('.assistant-order-button')?.remove();
   elementos.feedbackDetalhe.after(botaoAssistentePedido(pedido.order_id, 'olist'));

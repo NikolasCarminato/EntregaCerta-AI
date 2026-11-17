@@ -145,6 +145,12 @@ def cenarios():
         ('A14_concisao_seguimento','analista','Responder o novo cálculo mantendo base 1003, sem repetir precisão/recall quando não perguntados.',[
             ('Em uma frase: quantos pedidos estão fora da fila?',FILA),
             ('E quantos entrariam se a capacidade fosse de 5%? Só o número e a conta.',FILA)]),
+        ('A15_capacidade_fracionaria_pequena','analista','19 x 2,5 / 100 = 0,475; zero pedidos após piso, E41; não arredondar para um.',[
+            ('E se a capacidade fosse de 2,5%? Só a quantidade e a conta exata.',{**FILA,'pedidos_avaliados':19,'pedidos_na_fila':1})]),
+        ('A16_capacidade_outra_base','analista','1234 x 12,5 / 100 = 154,25; 154 após piso; citar hipótese E41 e total E2.',[
+            ('Se a capacidade for de 12,5%, quantos entram? Explique o arredondamento e cite a fonte.',{**FILA,'pedidos_avaliados':1234,'pedidos_na_fila':123})]),
+        ('A17_comparar_capacidades','analista','Separar capacidade atual 10% (E4), hipótese 17% e cálculo 170,51 -> 170 (E41).',[
+            ('Qual é a capacidade configurada agora? E se a capacidade fosse de 17%, quantos pedidos entrariam?',FILA)]),
         ('C17_atual_ausente_original_conhecido','cliente','Distinguir prazo atual nulo do original conhecido sem garantir entrega.',[
             ('O prazo atual sumiu. Ainda posso contar com aquela data original?',prazo_removido)]),
     ]
@@ -158,7 +164,7 @@ def executar(saida, selecionados=None, repeticoes=1, intervalo=5.0):
               'origem_dados','contexto_enviado','historico_enviado','resposta_provedor','resposta_exibida',
               'disponivel','motivo_provedor','citacoes_existentes','evidencias','modelo','executado_em_utc',
               'latencia_segundos','hashes_codigo','revisao_assistida','gravidade','notas_revisao','revisao_humana','diagnostico_provedor',
-              'tentativas_provedor','recuperada','erro_codigo','falhas_tentativas']
+              'tentativas_provedor','recuperada','erro_codigo','falhas_tentativas','orientacoes_repetidas_removidas','orientacao_corrigida_com_contexto','modelo_respondido']
     saida.parent.mkdir(parents=True,exist_ok=True)
     total=0
     with saida.open('x',encoding='utf-8-sig',newline='') as f:
@@ -195,6 +201,7 @@ def executar(saida, selecionados=None, repeticoes=1, intervalo=5.0):
                             'citacoes_existentes':json.dumps(resultado.get('evidencias',{}).get('citadas',[])),
                             'evidencias':json.dumps(resultado.get('evidencias',{}),ensure_ascii=False),
                             'modelo':os.getenv('GEMINI_MODEL','gemini-3.1-flash-lite'),
+                            'modelo_respondido':bruto.get('modelo_respondido'),
                             'executado_em_utc':datetime.now(timezone.utc).isoformat(),
                             'latencia_segundos':round(perf_counter()-inicio,3),
                             'hashes_codigo':json.dumps(hashes),'revisao_assistida':'PENDENTE',
@@ -204,6 +211,8 @@ def executar(saida, selecionados=None, repeticoes=1, intervalo=5.0):
                             'recuperada':bruto.get('recuperada',False),
                             'erro_codigo':bruto.get('erro_codigo'),
                             'falhas_tentativas':json.dumps(bruto.get('falhas_tentativas',[]),ensure_ascii=False),
+                            'orientacoes_repetidas_removidas':resultado.get('orientacoes_repetidas_removidas',0),
+                            'orientacao_corrigida_com_contexto':resultado.get('orientacao_corrigida_com_contexto',False),
                         })
                         f.flush();total+=1
                         if capturado.get('diagnostico'):

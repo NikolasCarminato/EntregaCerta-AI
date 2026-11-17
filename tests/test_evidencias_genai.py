@@ -28,6 +28,44 @@ class EvidenciasTest(unittest.TestCase):
         self.assertEqual(itens['E39'],903)
         self.assertIn('170 pedidos',itens['E41'])
 
+    def test_hipotese_condicional_recebe_referencia_propria_e_valor_exato(self):
+        base={'fonte_dados':'fila','pedidos_avaliados':1003,'pedidos_na_fila':100,'percentual_configurado_da_fila':10}
+        for frase in ['E se a capacidade fosse de 5%?', 'capacidade for de 5%',
+                      'capacidade ficar em 5%', 'capacidade passar para 5%']:
+            with self.subTest(frase=frase):
+                pronto=contextualizar(base,'analista',pergunta=frase)
+                e={x['id']:x['valor'] for x in preparar(pronto)['itens']}
+                self.assertEqual(e['E2'],1003);self.assertEqual(e['E4'],10)
+                self.assertIn('1003 x 5 / 100 = 50,15',e['E41'])
+                self.assertIn('arredondar para baixo: 50 pedidos',e['E41'])
+                self.assertEqual(pronto['pedidos_na_fila'],100)
+        self.assertEqual(base['percentual_configurado_da_fila'],10)
+
+    def test_arredondamento_fracionario_zero_e_percentual_decimal(self):
+        for total,frase,exato,inteiro in [
+            (19,'capacidade fosse de 2,5%','0,475',0),
+            (1234,'capacidade fosse de 12,5%','154,25',154),
+            (0,'revisar 5%','0',0),
+            (20,'revisar 5%','1',1),
+        ]:
+            with self.subTest(total=total,frase=frase):
+                t=simular_capacidade(frase,total)
+                self.assertIn('= '+exato+'.',t)
+                self.assertIn('arredondar para baixo: '+str(inteiro)+' pedidos',t)
+        for frase in ['capacidade fosse de -5%','capacidade fosse de 101%',
+                      'capacidade fosse de 5% ou 10%','revisar 5% dos priorizados']:
+            self.assertIsNone(simular_capacidade(frase,1003))
+
+    def test_referencia_distingue_cota_diaria_de_fracao_global(self):
+        base={'fonte_dados':'fila','pedidos_avaliados':100,'pedidos_na_fila':2,
+              'politica_fila':'cota_diaria_pendentes','limites_diarios':[{'pendentes':3},{'pendentes':7}]}
+        c=contextualizar(base,'analista',pergunta='Se a capacidade fosse de 10%?')
+        e={x['id']:x['valor'] for x in preparar(c)['itens']}
+        self.assertIn('2 alertas',e['E41'])
+        self.assertIn('para cima ocorre em cada dia',e['E41'])
+        self.assertEqual(c['pedidos_avaliados'],100)
+        self.assertEqual(base['limites_diarios'],[{'pendentes':3},{'pendentes':7}])
+
     def test_ausencia_de_informacao_nao_confunde_zero_com_nulo(self):
         contexto={'fonte_dados':'olist','pedido':{'atrasou':0},'precision':0,'economia':0,'shap':[]}
         pronto=contextualizar(contexto,'analista')

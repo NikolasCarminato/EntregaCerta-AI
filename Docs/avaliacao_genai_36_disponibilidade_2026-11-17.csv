@@ -1,0 +1,2 @@
+﻿modelo,executado_em_utc,pergunta,disponivel,resposta,codigo_http,categoria,modelo_respondido,latencia_segundos
+gemini-3.6-flash,2026-11-17T16:32:16.469656+00:00,Responda apenas OK.,False,,504,servico,,15.053
