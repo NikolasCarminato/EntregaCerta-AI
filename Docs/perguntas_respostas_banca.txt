@@ -1,0 +1,140 @@
+ENTREGACERTA AI
+PERGUNTAS E RESPOSTAS PARA A BANCA
+
+25 perguntas com respostas sugeridas para ensaio, alinhadas ao estado documentado da VER0.7.
+Referência do projeto: Docs/modelo_ver07.md.
+Atualizado em 18/11/2026.
+
+
+1. Qual problema o EntregaCerta AI resolve e quem é seu usuário principal?
+
+Nosso usuário principal é o analista de logística. O projeto ajuda a identificar quais pedidos pendentes merecem atenção primeiro, organizando uma fila por risco de atraso. O analista consulta as informações e decide o acompanhamento. A área do cliente é secundária e está em testes.
+
+
+2. Por que usar IA em vez de uma regra simples, como priorizar pedidos não despachados?
+
+O modelo consegue combinar sinais como prazo, despacho, distância e históricos. Entretanto, precisamos demonstrar que isso compensa a complexidade. Comparamos o CatBoost com regras simples: ele superou a referência selecionada na validação, mas outra regra ficou muito próxima no teste. Portanto, não afirmamos superioridade sobre todas as alternativas.
+
+
+3. De onde vieram os dados? São reais? Qual é a limitação de usar registros antigos?
+
+Utilizamos registros reais e anonimizados da Olist, de 2016 a 2018. Eles permitem desenvolver e avaliar uma reprodução histórica. Como a operação logística pode ter mudado, esses resultados não garantem desempenho atual. Antes de implantar, precisaríamos avaliar dados recentes e representativos da empresa.
+
+
+4. Como vocês definiram que um pedido atrasou?
+
+Comparamos o dia da entrega efetiva com o dia prometido. Se a entrega ocorreu depois, classificamos como atraso; no mesmo dia, consideramos pontual. Cancelamentos e pedidos sem entrega observada ficam fora dessa coorte, pois não podemos tratá-los automaticamente como entregas pontuais.
+
+
+5. Por que realizar a previsão em D-1? Ainda existe tempo para agir?
+
+Em D-1, temos mais informações sobre o andamento do pedido, o que favorece a triagem. Em contrapartida, sobra menos tempo para intervenção. O analista pode verificar a situação e avaliar um acompanhamento, mas ainda precisamos medir em uma operação real quais ações seriam viáveis e eficazes.
+
+
+6. Quais informações estavam disponíveis nesse momento? Como evitaram dados do futuro?
+
+Usamos informações conhecidas até o checkpoint, como a promessa de entrega, características do pedido e despacho já ocorrido. A entrega futura e avaliações posteriores ficam fora das entradas. Também existem limitações documentadas: por exemplo, a matriz rodoviária de 2024 é uma aproximação aplicada a pedidos antigos, não uma reconstrução histórica perfeita.
+
+
+7. Por que existem 96.470 pedidos na base, mas apenas 5.655 no treinamento efetivo?
+
+Os 96.470 representam toda a coorte histórica elegível, dividida em treino, validação e teste. No treino, aplicamos os filtros do problema: pedidos ainda pendentes em D-1 e com desfecho conhecido antes do início da validação. Esses critérios deixam 5.655 exemplos para ajustar o classificador.
+
+
+8. Como construíram os históricos dos vendedores e das rotas sem vazamento?
+
+Para cada pedido, usamos apenas entregas anteriores ao momento da análise. Assim, o histórico não incorpora o resultado futuro do próprio pedido nem entregas que ainda não tinham acontecido. Isso aproxima a construção dos atributos das informações que poderiam estar disponíveis naquele momento.
+
+
+9. Por que escolheram o CatBoost e como ele funciona?
+
+O CatBoost combina árvores construídas em sequência: cada nova árvore procura reduzir o erro do conjunto. Ele também trata variáveis categóricas internamente. Escolhemos a variante de 111 atributos pelo resultado na validação e pela reprodução das previsões, considerando também a carga de revisão e as limitações da comparação.
+
+Referência: Documentação do CatBoost
+https://catboost.ai/docs/en/concepts/algorithm-main-stages
+
+
+10. Qual foi o papel do Optuna? Ele foi executado na VER0.7?
+
+O Optuna automatiza a busca de hiperparâmetros, como profundidade e taxa de aprendizado. Na analogia da corrida, ele é o engenheiro que testa regulagens, enquanto o CatBoost é o piloto. Há código de busca nas versões de apoio 0.5 e 0.6; a VER0.7 reproduz parâmetros fixos, sem uma nova busca nessa rodada.
+
+
+11. Vocês usaram dados sintéticos?
+
+Experimentamos CTGAN em etapas anteriores, separadas do piloto atual. A versão CatBoost escolhida utiliza dados reais no treinamento e na avaliação. Portanto, as métricas que apresentamos não dependem de avaliar registros gerados artificialmente.
+
+
+12. O que significam recall de 82,29%, precision de 55,86% e F1 de 66,55%?
+
+Recall significa que sinalizamos 553 dos 672 atrasos. Precision significa que, dos 990 pedidos sinalizados, 553 realmente atrasaram. O F1 combina essas duas medidas. Apresentamos também a matriz de confusão, porque a acurácia sozinha pode esconder atrasos não encontrados e o volume de falsos alertas.
+
+
+13. A fila representa 5,32% dos pedidos ou 66,62% dos pendentes?
+
+Ambos estão corretos, mas usam denominadores diferentes. São 990 revisões entre 18.603 pedidos do lote, ou entre 1.486 ainda pendentes em D-1. Para discutir o trabalho sobre os casos que precisam de acompanhamento, 66,62% dos pendentes é a referência mais relevante.
+
+
+14. Como escolheram a cota de 65%? E se a equipe conseguir revisar apenas 30%?
+
+A cota de 65% surgiu da exploração da relação entre cobertura de atrasos e tamanho da fila. Ela ainda precisa ser validada com uma capacidade operacional real. Com 30%, selecionaríamos menos pedidos e precisaríamos medir novamente o recall: os 82,29% não podem ser transferidos para essa nova política.
+
+
+15. Qual é o impacto dos 437 falsos alertas e dos 119 atrasos não identificados?
+
+Os 437 falsos alertas representam revisão de pedidos que chegaram no prazo. Os 119 falsos negativos são atrasos que ficaram fora da fila. A supervisão humana ajuda a avaliar os alertas, mas não recupera automaticamente os casos que o modelo deixou de sinalizar. Por isso, precisamos considerar os dois custos.
+
+
+16. O teste foi reutilizado? Como isso limita as conclusões?
+
+Sim. O teste participou de explorações anteriores, inclusive da política da fila. Portanto, apresentamos os resultados como retrospectivos e exploratórios, não como uma avaliação final totalmente independente. Para confirmar a capacidade de generalização, precisamos congelar modelo e política e avaliar um período novo.
+
+
+17. Um score de 0,80 significa 80% de chance de atraso?
+
+Não podemos afirmar isso. Atualmente usamos o score para ordenar os pedidos por risco. Sua calibração como probabilidade ainda não foi validada. Para apresentar uma chance de atraso, precisaríamos avaliar a correspondência entre os scores e as frequências observadas em dados separados.
+
+
+18. A importância de um atributo demonstra a causa do atraso?
+
+Não. Ela indica quanto o modelo utiliza aquele atributo, considerando os dados e as demais variáveis. Para explicar um pedido específico, poderíamos calcular contribuições locais, por exemplo com SHAP, mas isso também não provaria causalidade. A causa operacional exigiria investigação adicional.
+
+
+19. Mais dados e mais treinamento garantem melhora?
+
+Não. Mais dados reais e representativos, melhores atributos e ajustes podem ajudar, mas precisamos testar essas hipóteses. Aumentar apenas o treinamento pode levar ao sobreajuste. Usaríamos curvas de aprendizado e validação temporal para investigar melhorias, confirmando o ganho em dados novos.
+
+Referência: Scikit-learn
+https://scikit-learn.org/stable/modules/learning_curve.html
+
+
+20. Qual é a função da GenAI e como vocês tratam respostas inventadas?
+
+A GenAI ajuda a interpretar informações e produzir resumos e relatórios com o contexto fornecido pela aplicação. As instruções exigem apoio nas evidências e reconhecimento de informações ausentes, mas não eliminam alucinações. O analista confere a resposta. Se a API falhar, a consulta e a inferência continuam disponíveis, e o PDF pode usar um resumo factual identificado.
+
+
+21. Como o backend impede que um cliente acesse o dashboard?
+
+A API verifica a sessão e o perfil do usuário nas rotas protegidas. Um cliente não recebe acesso apenas por conhecer a URL ou tentar chamar diretamente a API. O cadastro público também não permite escolher o perfil de analista. A restrição está no backend, além da interface.
+
+
+22. Quais cuidados de privacidade e LGPD existem? O que ainda falta?
+
+Implementamos controle de acesso, senhas com hash, sessões com expiração e separação entre contas, loja demonstrativa e base histórica. Para uso real, ainda precisamos formalizar finalidade, base legal, retenção, atendimento aos titulares e avaliação do envio de dados ao provedor de IA. Não apresentamos o protótipo como certificado ou integralmente adequado à LGPD.
+
+Referência: Orientações da ANPD
+https://www.gov.br/anpd/pt-br/centrais-de-conteudo/materiais-educativos-e-publicacoes/guia-do-consumidor_como-proteger-seus-dados-pessoais-final.pdf
+
+
+23. Os novos pedidos da área do cliente já recebem previsões?
+
+Ainda não. Essa área é demonstrativa e está separada da inferência histórica. Para pontuar pedidos novos, precisaríamos reconstruir os mesmos atributos utilizados no treinamento, com informações disponíveis em D-1, e validar o modelo nessa nova operação.
+
+
+24. Vocês comprovaram redução de atrasos ou economia de trabalho?
+
+Ainda não. Comprovamos resultados de triagem histórica. Para medir impacto, faríamos um piloto comparando o processo atual com o apoio do sistema, acompanhando tempo de revisão, atrasos identificados, ações realizadas e resultados das entregas. Uma fila menor, sozinha, não comprova economia de horas nem atrasos evitados.
+
+
+25. O que falta para colocar a solução em produção e perceber uma queda de desempenho?
+
+Precisamos integrar dados operacionais, validar em um período novo, ajustar a fila à capacidade dos analistas e concluir os controles de segurança e governança. Depois, acompanharíamos qualidade dos dados, distribuição dos scores e, conforme chegassem os desfechos, precision e recall por período e segmento, com critérios definidos para revisão ou retreinamento.

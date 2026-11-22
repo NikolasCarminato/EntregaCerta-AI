@@ -1,11 +1,33 @@
 # Desenvolvimento do EntregaCerta AI
 
-Histórico técnico acumulado desde 05/11/2026. A organização atual é o **ponto 1**,
-registrado ao final. Para executar o sistema, siga [o guia atual](instalacao_novo_pc.md).
+Histórico técnico acumulado desde 05/11/2026. Para executar o sistema, siga
+[o guia atual](instalacao_novo_pc.md).
 Os caminhos/comandos das entradas antigas documentam o estado de cada experimento;
 não são uma sequência de inicialização da versão atual.
 
-## Problema e dados
+## Estado atual e diagramas — 18/11/2026
+
+O sistema usa HTML/CSS/JavaScript, FastAPI e PostgreSQL. O modelo ativo é o
+CatBoost VER0.7 no checkpoint D−1; prioriza por dia 65% dos pedidos pendentes,
+arredondando para cima. A loja demonstrativa continua separada do ML.
+Detalhes e limitações em [modelo_ver07.md](modelo_ver07.md).
+
+Infraestrutura local implementada com **Terraform + Docker**: aplicação na porta
+8001 e PostgreSQL existente importado, com volume preservado. O modo Python na
+porta 8000 continua disponível. Instruções no [guia de execução](instalacao_novo_pc.md).
+
+Diagramas atualizados: [BPMN](diagramas/processo.svg), [DER](diagramas/der.svg) e
+[arquitetura](diagramas/arquitetura.svg). Fontes editáveis: [processo.bpmn](diagramas/processo.bpmn),
+[der.drawio](diagramas/der.drawio) e [arquitetura.drawio](diagramas/arquitetura.drawio).
+Há PNG de cada diagrama para os slides. A seção de 18/11 ao final documenta
+as fontes, verificações e como editá-los.
+
+**Artigo dispensado pela equipe em 18/11/2026.** Menções a artigo nas entradas
+anteriores são histórico do planejamento, não uma pendência atual.
+Continuam a documentação técnica, slides e demonstração. Os esboços iniciais
+abaixo foram preservados; não descrevem a arquitetura ou o status atuais.
+
+## Problema e dados — planejamento inicial
 
 Priorizar pedidos que merecem acompanhamento humano por risco de entrega após o dia prometido. A previsão será feita com informações disponíveis na aprovação; a demonstração será uma reprodução histórica.
 
@@ -15,7 +37,7 @@ Unidade: um pedido, agregando seus itens. Positivo: dia da entrega efetiva poste
 
 Usar preço/frete informado, composição do pedido, categoria, peso/dimensões, UFs e prazo/calendário quando adequados. Entrega efetiva, passagem à transportadora, status final e avaliações posteriores ficam fora da entrada do modelo. A fonte não tem versões históricas: a disponibilidade dos cadastros e da promessa na aprovação é uma hipótese a documentar.
 
-## Arquitetura prevista
+## Arquitetura inicial — histórico
 
 ```mermaid
 flowchart LR
@@ -31,9 +53,12 @@ flowchart LR
 
 Backend em módulos Python e interface Streamlit na mesma aplicação. PyTorch entra em uma rede pequena para comparação; Scikit-learn cobre pré-processamento, referências e modelos clássicos. O modelo final será escolhido pela validação, não pela complexidade da ferramenta.
 
-O BPMN documental já existente foi preservado em `processo.bpmn`, com prévia em `processo.png`. Ele representa o fluxo planejado; será atualizado conforme a implementação. A infraestrutura Terraform ficará para a entrega final.
+Na época deste planejamento, o BPMN representava a previsão na aprovação.
+`processo.bpmn` e `processo.png` foram atualizados em 18/11/2026 para o fluxo
+implementado em D−1. A infraestrutura Terraform foi implementada depois, no
+mesmo dia, conforme registro ao final deste documento.
 
-## Roadmap e modo de trabalho
+## Roadmap inicial e modo de trabalho — histórico
 
 | Etapa | Trabalho e entrega | Estado |
 |---|---|---|
@@ -56,7 +81,7 @@ Para implementar com orientação: **Nos guie pela etapa N, para implementarmos.
 - Mostrar probabilidade apenas se a calibração sustentar essa interpretação. Não inventar resultados, causas ou ROI.
 - A LLM redige a partir dos fatos do sistema. ML e painéis continuam funcionando se a API falhar. Decisões permanecem humanas.
 
-## Entregáveis e registro atual
+## Entregáveis e registro de 05/11/2026 — histórico
 
 ### Dataset consolidado em 05/11/2026
 
@@ -1320,7 +1345,7 @@ $env:ENTREGACERTA_TEST_POSTGRES="1"
 Para repetir os cenários com a API configurada (consome cota; apenas fixtures):
 
 ```powershell
-.\.venv\Scripts\python.exe -B -m src.avaliar_genai --real --saida Docs/avaliacao_genai_nova.csv
+.\.venv\Scripts\python.exe -B -m src.avaliar_genai --real --saida Docs/evidencias/genai/avaliacao_genai_nova.csv
 ```
 
 Use outro nome a cada rodada: o avaliador recusa sobrescrever resultados.
@@ -1403,7 +1428,7 @@ checagem de referência, não como prova de toda a frase.
 Para reproduzir a rodada completa com pausas, na raiz do projeto:
 
 ```powershell
-.\.venv\Scripts\python.exe -X utf8 -B -m src.avaliar_genai_uso --real --saida Docs/avaliacao_genai_uso_nova.csv --intervalo 5
+.\.venv\Scripts\python.exe -X utf8 -B -m src.avaliar_genai_uso --real --saida Docs/evidencias/genai/avaliacao_genai_uso_nova.csv --intervalo 5
 ```
 
 O arquivo de saída deve ser novo. `--caso C04_despachado` seleciona um cenário;
@@ -1716,7 +1741,7 @@ variações, com nome de saída novo para preservar as evidências:
 
 ```powershell
 $env:GEMINI_MODEL="gemini-3.6-flash"
-.\.venv\Scripts\python.exe -X utf8 -B -m src.avaliar_genai_uso --real --saida Docs/avaliacao_genai_36_nova.csv --caso A14_concisao_seguimento --caso A15_capacidade_fracionaria_pequena --caso A16_capacidade_outra_base --caso A17_comparar_capacidades
+.\.venv\Scripts\python.exe -X utf8 -B -m src.avaliar_genai_uso --real --saida Docs/evidencias/genai/avaliacao_genai_36_nova.csv --caso A14_concisao_seguimento --caso A15_capacidade_fracionaria_pequena --caso A16_capacidade_outra_base --caso A17_comparar_capacidades
 ```
 
 Em seguida, ampliar para os demais casos e gerar novamente o PDF pelo dashboard
@@ -1863,3 +1888,464 @@ e artefatos integrados): todos com hashes idênticos. O notebook também verific
 os pesos/preprocessador MLP e os ZIPs. README, guia de instalação e registro
 VER0.7 foram atualizados. Nenhuma alteração na API, no PostgreSQL, na interface
 ou no modelo ativo foi feita nesta tarefa. Sem commit/push.
+
+## Diagramas atuais: BPMN, DER e arquitetura — 18/11/2026
+
+Pedido da equipe: atualizar o BPMN e criar DER e arquitetura a partir da
+implementação atual, sem alterar visual, intro ou ML. O artigo deixou de ser
+necessário por decisão explícita da equipe; não faz parte dos entregáveis
+pendentes. Os registros anteriores foram mantidos como histórico.
+
+### Arquivos e uso
+
+| Conteúdo | Fonte editável | Vetor para ampliar | Imagem para slides |
+|---|---|---|---|
+| Processo e regra de negócio | [processo.bpmn](diagramas/processo.bpmn) | [processo.svg](diagramas/processo.svg) | [processo.png](diagramas/processo.png) |
+| DER físico | [der.drawio](diagramas/der.drawio) | [der.svg](diagramas/der.svg) | [der.png](diagramas/der.png) |
+| Arquitetura implementada | [arquitetura.drawio](diagramas/arquitetura.drawio) | [arquitetura.svg](diagramas/arquitetura.svg) | [arquitetura.png](diagramas/arquitetura.png) |
+
+Os arquivos draw.io contêm caixas, campos e conectores editáveis, não uma imagem
+achatada. Abra-os no diagrams.net/draw.io; abra o BPMN em um editor compatível
+com BPMN 2.0, como um modelador baseado em bpmn-js. Após editar a fonte,
+reexporte SVG/PNG para manter as versões sincronizadas. Para slides, prefira
+recortes por fluxo ou schema: o DER completo inclui todos os campos e o BPMN
+reúne três processos, portanto reduzir tudo a um único slide prejudica a leitura.
+
+### BPMN: o que mudou
+
+O arquivo anterior descrevia previsão na aprovação. A versão atual é documental
+(`isExecutable=false`) e possui três processos independentes na mesma colaboração:
+
+1. **Analista:** solicitação do lote histórico, autorização, consulta de entradas,
+   validação do contrato, CatBoost nos pendentes elegíveis em D−1, cota diária
+   `ceil(0,65 × pendentes do dia)`, revisão humana e PDF opcional. O resumo completo
+   da GenAI e a contingência identificada são caminhos distintos do relatório.
+2. **Loja demonstrativa:** criação do pedido, atualização opcional pelo analista
+   com versão/status/prazo/responsável e histórico, seguida de consulta do cliente.
+   As tarefas representam requisições em sessões distintas; não há automação de
+   entrega, pagamento, consulta a transportadora ou pontuação ML desses pedidos.
+3. **Assistente:** autorização por contexto, evidências, chamada ao Gemini,
+   verificação de referências ou aviso de indisponibilidade e leitura humana.
+   Feedback explícito é persistido; conversas são temporárias. Conferir referências
+   não prova que toda interpretação da IA seja correta.
+
+Não há fluxo ligando pedidos da loja ao CatBoost, pois essa integração ainda
+não existe. Também não foram desenhadas ações automáticas em transportadoras
+ou persistência de decisões sobre a fila histórica. As raias representam os
+responsáveis pelas atividades; os pools separam os três fluxos de uso.
+Falhas de autenticação e recusas de formulário são tratadas no código, mas não
+foram detalhadas como todos os caminhos possíveis nesta visão de negócio.
+
+### DER: fonte e interpretação
+
+Conferido com [esquema_web.sql](../src/esquema_web.sql), as rotinas de criação em
+[banco.py](../src/banco.py) e [catboost_ver07.py](../src/catboost_ver07.py), e a
+[view de inferência anterior](../src/view_pedidos_inferencia.sql).
+Uma conexão ao PostgreSQL em **transação somente leitura** confirmou o catálogo:
+12 tabelas, 104 colunas nessas tabelas, 8 FKs e uma view com 32 colunas.
+Foram consultadas também 33 restrições, sem consultar registros de usuários.
+A primeira tentativa no sandbox não conectou; o acesso local permitido funcionou.
+
+- `app_web`: cinco tabelas de contas, sessões, limite de acesso, pedidos e feedback.
+  `pedidos_demo.itens` e `eventos` são JSONB; não existem tabelas separadas para eles.
+  A combinação cliente/chave de requisição é única. Responsável é opcional;
+  exigir perfil de analista ativo é regra do código, não uma condição da FK.
+- `modelo_ver07.pedidos`: atributos e contexto JSONB, com chave e hash da versão.
+  Não armazena alvo nem score; não tem FK para a coorte anterior ou para a loja.
+- `public`: seis tabelas legadas. As quatro extensões por `pedido_id` têm
+  cardinalidade permitida de 1 para 0..1; a carga pode preencher todas, mas a FK
+  não exige isso. `clientes` é uma extensão por pedido, não um cadastro de pessoas.
+  Os tipos TEXT legados foram representados como realmente estão no banco.
+- `public.avaliacoes.order_id` permite associação lógica ao pedido, mas não
+  possui FK e pode não encontrar o pedido na coorte consolidada. A linha tracejada
+  distingue essa associação das oito relações físicas. Avaliações Olist não se
+  confundem com `app_web.assistente_feedback`; o chat atual não consulta os
+  comentários Olist automaticamente.
+- `vw_pedidos_inferencia` é uma projeção com JOINs e conversões de tipos para a
+  MLP anterior; não é outra tabela com armazenamento próprio.
+
+### Arquitetura: limites representados
+
+Separados preparação/pesquisa e execução da aplicação. O navegador usa HTML,
+CSS e JavaScript, conectado à API FastAPI. A inferência consulta entradas SQL e
+carrega o `.cbm`; treinamento e auditoria ficam fora da requisição web.
+PostgreSQL 17 roda no Docker Compose com volume persistente. Uvicorn roda em
+um processo local, pois conversas, snapshots de análise e PDFs ficam em memória
+por até 30 minutos. Reiniciar o processo perde esse estado temporário.
+
+A GenAI recebe o contexto autorizado pelo backend, com evidências; para PDF,
+somente indicadores agregados. Chaves ficam no servidor. O Gemini é externo,
+não um componente hospedado no processo Python. Se ele falha, o PDF usa o resumo
+de contingência e os demais módulos continuam disponíveis. Nenhum RAG, agente,
+Terraform implantado ou rastreamento real foi apresentado como existente.
+Fontes principais: `main.py`, `compose.yaml`, `src/api.py`, `src/acesso_web.py`,
+`src/loja_web.py`, `src/conversas_assistente.py` e `src/relatorio_pdf.py`.
+
+### Validação executada
+
+- BPMN original e versão reexportada válidos contra os XSD BPMN 2.0/DI da OMG,
+  já preservados na cópia anterior do projeto. **3 processos, 37 nós e 37 fluxos**.
+  Verificados IDs únicos, conexões, incoming/outgoing, condições/padrões dos
+  gateways, cobertura das raias, caminhos de início a fim e representação DI.
+- Importação, exportação SVG e round-trip XML em **bpmn-js 18.16.0**, sem avisos.
+  Renderização local em navegador invisível; nenhum diagrama enviado a serviço.
+- XML dos dois arquivos draw.io validado quanto a estrutura, IDs e conectores.
+  Não houve importação gráfica no aplicativo draw.io nesta conferência.
+- DER comparado automaticamente com os DDL e o catálogo real: nomes, ordem,
+  tipos e nulabilidade das 104 colunas, marcações de PK/FK e separação da
+  associação lógica. As oito FKs estão representadas.
+- PNGs gerados a partir dos SVGs e inspecionados visualmente; rótulos e linhas
+  reposicionados para evitar cruzar campos das tabelas. Conferência geométrica
+  de DER/arquitetura não encontrou texto fora dos limites da página.
+- Comparação SHA-256 de **277 arquivos protegidos** confirmou preservação de
+  `frontend`, `src`, `Modelos`, `Notebooks`, `tests`, `main.py`, dependências,
+  `.env` e Compose. Sem mudanças na interface, intro, pesos ou comportamento ML.
+
+Esta validação cobre documentação e fidelidade ao código/esquema. Não houve
+retreinamento, chamada ao Gemini, escrita no banco ou nova execução dos testes
+funcionais da aplicação. A validação real pendente da GenAI permanece separada.
+
+
+## 18/11/2026 — Terraform e Docker local
+
+Pedido da equipe: executar aplicação e PostgreSQL localmente com Terraform,
+preservando o banco atual, visual, intro e ML. Não houve deploy em nuvem.
+
+### Implementação
+
+- `Dockerfile`: Python 3.12, dependências de execução fixadas, PyTorch 2.15.0 CPU,
+  modelo CatBoost e catálogo Olist já existentes; processo sem root, Uvicorn
+  com um worker e healthcheck HTTP. `pip check` sem conflitos na construção.
+- `.dockerignore`: contexto limitado ao necessário. `.env`, estado Terraform,
+  backups, notebooks e dados de pesquisa não entram na imagem.
+- `infra/local/main.tf`: Docker provider 4.7.0, rede, volume PostgreSQL,
+  contêiner PostgreSQL e contêiner da aplicação. Provider travado no lock.
+- `infra/local/gerenciar.py`: comandos `planejar`, `iniciar` e `parar`. Constrói
+  a imagem, descobre/importa os recursos existentes e valida o plano antes de
+  aplicar. Senha recebida do `.env`, sem arquivo tfvars ou exposição no terminal.
+- Importados `entregacerta_ai_postgres_db`, `entregacertaai_postgres_data` e
+  `entregacertaai_default`. `prevent_destroy` e `ignore_changes` preservam os
+  recursos persistentes. O plano inicial criou somente `docker_container.aplicacao`.
+- Aplicação em `http://localhost:8001`, com bind em 127.0.0.1, PostgreSQL pela
+  rede interna e `.env` montado somente para leitura. O modo anterior permanece.
+- Terraform 1.14.9 instalado de forma portátil em `.terraform-local/`, ignorada
+  pelo Git; checksum do ZIP conferido na fonte oficial. Estado e planos locais
+  também ignorados; nunca publicar, pois a importação do banco inclui credenciais.
+- README, guia e arquitetura (draw.io/SVG/PNG) atualizados. BPMN e DER mantidos.
+
+### Testes executados
+
+- `terraform fmt` e `validate` aprovados; importação e `apply` executados no Docker
+  Desktop. Novo plano sem alterações após a primeira aplicação e a reabertura.
+- **101 testes aprovados no Linux da imagem**, em 499,138 segundos, incluindo
+  os cinco novos testes de proteção do plano. Schemas temporários removidos.
+  A suíte cobriu dados reais, reprodução dos scores/alertas, autenticação,
+  autorização, CSRF, pedidos, evidências, PDF e falhas simuladas do provedor.
+- `docker exec entregacerta_ai_app python main.py verificar`: 30.778 entradas
+  no schema do modelo, lote de 18.603 pedidos e fila de 990; inferência real.
+- HTTP real na porta 8001: páginas públicas, catálogo, bloqueio anônimo,
+  sessão de analista, dashboard, pedidos e prioridades. Criação/exclusão de
+  conversa confirmou origem/CSRF na nova porta, sem enviar mensagem ao Gemini.
+  Conta e sessão técnicas foram removidas ao final.
+- CSS, JavaScript da página inicial e logo servidos com bytes idênticos aos
+  arquivos locais. Comparação SHA-256 confirmou **267 arquivos preservados**
+  em frontend, src, Modelos, Notebooks e arquivos de ambiente/execução anteriores.
+- Parada e reabertura da aplicação concluídas. PostgreSQL permaneceu ativo e
+  com o mesmo ID de contêiner e volume; plano final: nenhuma alteração.
+- Tentativa de gerar somente um plano `-destroy` recusada por `prevent_destroy`
+  para banco, volume e rede. Nenhum apply destrutivo executado.
+- Imagem conferida sem `.env` e sem estado Terraform, executando com usuário
+  não root. Montagem de `.env` somente leitura e credenciais fora do ambiente
+  da aplicação declarado pelo Terraform confirmadas por inspeção.
+
+### Preservação e limites
+
+Backup `pg_dump` custom de 34,8 MiB salvo antes das mudanças em
+`.tmp_terraform/banco_antes.dump`, fora do Git. Contagens e hashes do conteúdo
+lógico das **12 tabelas existentes** foram comparados antes/depois, sem diferenças.
+Contas, sessões, pedidos demonstrativos, avaliações, bases históricas e entradas
+CatBoost foram preservados. A documentação da validação não inclui dados pessoais.
+
+Não houve retreinamento, ajuste do modelo, alteração do visual/intro, migração
+SQL ou chamada real ao Gemini nesta etapa. Chat/PDF foram verificados com
+provedor simulado/indisponível; disponibilidade do Gemini externo é independente.
+A criação em computador totalmente vazio está documentada, mas não foi
+executada nesta validação, que usou e preservou o banco já existente.
+Conversas e snapshots continuam em memória, com as limitações já documentadas.
+A primeira construção baixa bibliotecas grandes; `--sem-build` reutiliza a imagem.
+
+
+## 19/11/2026 - Nova verificação do Gemini configurado: chat e PDF
+
+Solicitação: fechar a pendência da GenAI, preservando visual, intro e ML.
+Configuração efetivamente carregada: **gemini-3.6-flash**, SDK google-genai
+3.0.0 e Python 3.12.14. A chave não foi exibida nem alterada. Não houve troca
+de modelo, ajuste de cobrança ou aumento dos limites de retentativa.
+
+### Resultado desta rodada
+
+**A pendência de disponibilidade e validação completa do resumo generativo
+permanece aberta.** Uma resposta real de chat terminou corretamente; as demais
+tentativas abaixo encontraram timeout ou HTTP 503/504. A sonda independente
+"Responda apenas OK.", sem contexto da aplicação, também recebeu HTTP 503.
+Isso indica falha do serviço acessado nesta rodada, não uma falha de montagem
+do PDF. Não demonstra indisponibilidade global para todas as contas.
+
+| Verificação | Resultado observado |
+| --- | --- |
+| Chat com fixture técnica: quantidade fora da fila | Respondeu 903 = 1003 - 100, com E39/E2/E3 corretas. Modelo respondido gemini-3.6-flash; recuperou após um HTTP 504, em 53,739 s. |
+| Segundo turno: capacidade hipotética de 5% | Três timeouts; 90,146 s. Não houve resposta para validar o arredondamento. |
+| Chat com agregados do lote real: resumo | Um timeout e dois HTTP 503; 52,942 s. Aviso de indisponibilidade, sem texto inventado de substituição. |
+| Chat com agregados reais: cota diária hipotética | Três HTTP 503; 32,205 s. Conteúdo generativo não avaliado. |
+| Resumo do PDF com agregados reais | Três HTTP 503; 36,252 s. PDF completo com resumo factual de contingência identificado. |
+| Sonda mínima independente | Uma chamada, HTTP 503 em 2,532 s, mesmo modelo configurado. |
+
+A primeira tentativa dentro do sandbox produziu ConnectError e foi registrada
+separadamente como inconclusiva por restrição do ambiente. As verificações acima
+usaram acesso de rede permitido. Não contabilizar esses ConnectError como
+evidência de qualidade ou disponibilidade do Gemini.
+
+### Fluxo e PDF efetivamente conferidos
+
+O teste chamou as rotas HTTP da aplicação com TestClient, em processo isolado,
+usando identidade técnica somente em memória. O guard de autenticação foi
+substituído apenas nesse processo de QA; não foi criada conta nem alterada a
+política do servidor em execução. A autorização real do PDF, CSRF, isolamento
+e proteção contra injeção de indicadores foram cobertos pelos testes locais.
+Não houve navegação manual no navegador nesta rodada.
+
+A consulta ao PostgreSQL e a inferência existente retornaram **18.603 pedidos
+e 990 priorizados**. Nenhum treinamento ou ajuste de ML foi executado. Para o
+Gemini foram enviados somente contexto e indicadores agregados, sem IDs dos
+pedidos, nomes, e-mails ou credenciais. Conversas e snapshots desse teste ficaram
+apenas na memória do processo de QA; não houve escrita em tabelas do banco.
+
+O download retornou HTTP 200, application/pdf e `X-Resumo-GenAI: indisponivel`.
+As duas páginas foram extraídas, renderizadas e inspecionadas: indicadores,
+histograma, texto de contingência e limites do estudo completos, sem cortes ou
+sobreposições. A soma das faixas do histograma é 990. **Esse arquivo não comprova
+um resumo concluído pelo Gemini.**
+
+PDF de evidência:
+[relatório real com contingência](../output/relatorios/EntregaCerta_AI_validacao_GenAI_2026-11-19.pdf).
+SHA-256: `28a05e358774bac24d5f36e04a8486a23669fcc54b9645188561f2b106d1387d`.
+
+### Regressões e preservação
+
+Comando executado:
+
+```powershell
+.\.venv\Scripts\python.exe -X utf8 -B -m unittest tests.test_evidencias_genai tests.test_conversas_assistente tests.test_assistente_genai tests.test_relatorio_pdf -v
+```
+
+Resultado: **59 testes listados, 56 aprovados e 3 ignorados**, sem falhas.
+Os três ignorados exigem habilitar o modo de integração que cria schemas
+temporários no PostgreSQL; não foram habilitados nesta rodada. A execução
+inicial no sandbox foi interrompida por ficar sem concluir; a execução com
+permissão local concluiu em 1,452 s após os imports. Nenhuma chamada real ao
+Gemini é feita por essa suíte: os resultados reais são os registrados acima.
+
+A comparação SHA-256 dos **269 arquivos protegidos** confirmou preservação
+de frontend, intro, src, modelos, notebooks, .env e arquivos de execução e
+infraestrutura incluídos no manifesto. Não foi identificada falha de código
+que justificasse alterar a integração para mascarar erros do provedor. Foram
+acrescentados registros de QA e esta atualização documental.
+
+Evidências, preservando contexto e respostas observados:
+
+- [tentativa restrita ao sandbox](evidencias/genai/avaliacao_genai_36_fechamento_inicial_2026-11-19.csv);
+- [chat real com fixtures técnicas](evidencias/genai/avaliacao_genai_36_fechamento_rede_2026-11-19.csv);
+- [chat e PDF com agregados Olist reais](evidencias/genai/avaliacao_genai_36_chat_pdf_2026-11-19.csv);
+- [sonda mínima do provedor](evidencias/genai/avaliacao_genai_36_sonda_2026-11-19.csv).
+
+As revisões assistidas foram registradas separadamente da revisão humana, que
+continua pendente nos arquivos que contêm esse campo. Uma referência existente
+não garante a correção semântica de qualquer resposta futura.
+
+Para fechar a pendência: com o serviço respondendo, repetir primeiro A14 e os
+casos A15/A16/A17 pelo avaliador existente, com novo nome de saída. Depois gerar
+uma análise e um PDF pelo dashboard do analista, conferir o texto integral e
+confirmar `X-Resumo-GenAI: incluido`. Contingência não substitui essa validação.
+Não houve mudança silenciosa para outro modelo. Se a equipe escolher uma
+alternativa, a qualidade do chat e do PDF deverá ser testada com ela.
+
+## 19/11/2026 - Gemini 3.5 Flash-Lite: demonstração, contas e PDF
+
+Testado `gemini-3.5-flash-lite` com o provedor real e somente indicadores
+agregados do lote Olist atual. A escolha foi validada antes de alterar `.env`.
+Não houve envio de IDs de pedidos, nomes, e-mails ou credenciais no contexto.
+
+| Caso | Conferência do conteúdo | Tempo com retentativas |
+| --- | --- | --- |
+| Pergunta da demonstração, em três frases | 18.603 avaliados, 990 na fila; score como risco relativo, sem probabilidade calibrada. E2/E3/E30 pertinentes. | 32,562 s; 2 tentativas, após HTTP 503 |
+| Contas da fila | 17.613 fora; 990/18.603 = aproximadamente 5,32% do lote; 990/1.486 = aproximadamente 66,62% dos pendentes. Referências corretas. | 66,586 s; 2 tentativas, após HTTP 504 |
+| Hipótese de capacidade diária de 5% | 101 pedidos, somando ceil(pendentes_do_dia × 0,05). Referência E41 correta; conta independente conferida. | 11,302 s; 1 tentativa na repetição válida |
+| PDF completo | Resumo real do Gemini, indicadores e gráficos íntegros em duas páginas; números coerentes com o contexto. | 19,411 s; 3 tentativas, após dois HTTP 503 |
+
+A primeira chamada da hipótese de 5% recebeu HTTP 504/503/504 e não produziu
+texto (84,995 s). Essa falha continua registrada. Uma repetição intermediária
+foi invalidada: o script de QA reconstruiu o contexto da lista filtrada de
+evidências e perdeu a política e os limites diários. A resposta não informou a
+quantidade solicitada. Esse ensaio não representa o contexto real da aplicação
+e não foi contado como aprovação. Na repetição válida, o contexto completo
+foi novamente obtido pela aplicação e a E41 foi comparada à primeira chamada.
+Nenhum ajuste no código de produção foi necessário.
+
+**Decisão:** conteúdo aprovado nos quatro casos específicos, com ressalva de
+disponibilidade e latência. Não representa estabilidade garantida nem uma taxa
+de acerto geral da GenAI. O modelo solicitado e o respondido foram 3.5 Flash-Lite
+nas respostas concluídas, com término STOP. Revisão assistida, não revisão humana.
+
+O PDF retornou HTTP 200 e `X-Resumo-GenAI: incluido`. O resumo gerado está integral
+no texto extraído; ambas as páginas foram renderizadas e inspecionadas, sem
+cortes ou sobreposições. Histograma soma 990 e os scores máximo/médio/mediano
+conferem com o contexto. Não se trata do resumo factual de contingência.
+
+Evidências:
+
+- [chat e PDF: rodada principal](evidencias/genai/avaliacao_genai_35_chat_pdf_2026-11-19.csv);
+- [ensaio invalidado por contexto incompleto](evidencias/genai/avaliacao_genai_35_cota_reteste_2026-11-19.csv);
+- [cota diária com contexto completo](evidencias/genai/avaliacao_genai_35_cota_contexto_completo_2026-11-19.csv);
+- [PDF completo com resumo do 3.5](../output/relatorios/EntregaCerta_AI_relatorio_Gemini35_2026-11-19.pdf).
+
+SHA-256 do PDF: `733b7647e2ecdcb38ade3a6d5e96efa1eaaeb2edd61443ac262e3505ce3d35d6`.
+
+Após a aprovação, somente `GEMINI_MODEL` foi trocado para
+`gemini-3.5-flash-lite` em `.env` e `.env.example`; demais variáveis preservadas.
+A comparação SHA-256 dos 268 arquivos protegidos não identificou alterações
+em frontend, intro, src, modelos, notebooks e demais arquivos de execução
+incluídos no manifesto. Sem escrita no banco, retreinamento ou mudança no ML.
+O teste HTTP usou identidade técnica em memória e substituição do guard apenas
+no processo isolado de QA. Não houve nova validação manual pelo navegador.
+As regressões locais da seção anterior não foram repetidas: o código permaneceu
+idêntico. Servidores já iniciados precisam reiniciar para recarregar `.env`;
+nenhum serviço em execução foi interrompido por este teste.
+
+
+## Organização dos materiais e roteiro V15 — 20/11/2026
+
+O [roteiro PDF V15](../output/apresentacao/EntregaCerta_AI_roteiro_4_pessoas_v15.pdf)
+acompanha os 25 slides atuais: Pessoas 1 a 4 com 3min20s, 5min10s, 5min35s e
+5min35s, respectivamente. A apresentação soma 19min40s, com 20s de margem.
+A demonstração de 3 minutos, o DER físico, o PDF de exemplo e o prompt estático
+estão incluídos. Tempos e ordem foram conferidos com as notas do PowerPoint;
+a duração falada depende do ensaio da equipe.
+
+- Materiais atuais: `output/apresentacao/`; relatórios recentes: `output/relatorios/`.
+- Apresentações V1–V14 e roteiros anteriores: ZIP em `output/versoes/`, com seus
+  caminhos originais internos. O TXT anterior do roteiro também está nesse ZIP.
+- Diagramas: `Docs/diagramas/`. Avaliações GenAI: `Docs/evidencias/genai/`, sem
+  mudar bytes, métricas ou respostas dos CSVs. Os nomes antigos citados neste
+  histórico referem-se agora a essa pasta.
+- PDFs de testes que ficavam em `tmp/pdfs/gemini36/` foram preservados em
+  `Docs/evidencias/genai/pdfs_testes_tecnicos.zip`, com os caminhos internos
+  originais. Caminhos registrados dentro dos CSVs continuam sendo históricos.
+- Scripts de geração, imagens de revisão e temporários saíram da raiz. Antes,
+  seus bytes foram copiados e verificados no backup local
+  `../EntregaCertaAI_Pontos/organizacao_20261119_v15/antes_da_organizacao.zip`.
+  O dump `banco_antes.dump` da implantação Terraform também permanece nesse
+  backup, sob `.tmp_terraform/`; não foi descartado como cache.
+- Código, dados, notebooks, modelos, ambientes Python, executável Terraform,
+  estado da infraestrutura, configuração e volume do banco foram preservados.
+  O modo de iniciar a aplicação continua igual ao guia.
+
+O backup da organização é parcial: cobre os arquivos reorganizados e removidos,
+não os ambientes Python nem o volume do PostgreSQL. Os scripts e manifestos
+desta operação ficam junto dele, fora da árvore do projeto.
+
+Conferência após a organização: 106 arquivos funcionais permaneceram idênticos
+por SHA-256; 67 links locais foram resolvidos, sem destinos ausentes. As 14
+páginas do roteiro foram renderizadas e revisadas. O pacote atual contém o
+mesmo PPTX V15, o novo roteiro e os dois anexos locais, com bytes conferidos.
+Foram retiradas da árvore 14 pastas temporárias (716 arquivos, 462,49 MiB) e
+6 caches; os temporários estão no backup verificado, fora do repositório.
+
+`python -B main.py verificar` concluiu com o PostgreSQL real: 30.778 entradas
+no banco do modelo, lote de 18.603 pedidos e 990 revisões CatBoost. A primeira
+tentativa no ambiente restrito falhou; a repetição com acesso ao serviço local
+passou. Não houve chamada à GenAI, escrita no banco ou novo treino. Esta
+conferência não substitui o ensaio no navegador nem o teste do provedor.
+
+Pendência de arquivo aberto resolvida em 20/11/2026: após a equipe salvar e
+fechar a V15, os dois arquivos apresentaram o mesmo SHA-256. A cópia duplicada
+em `output/pptx/` e essa pasta vazia foram removidas. A versão atual permanece
+em `output/apresentacao/`, idêntica à do pacote completo e à usada no roteiro.
+
+## Conferência do fluxo do analista — 20/11/2026
+
+Executado `python -X utf8 -B main.py testar --postgres`: **101 testes passaram**
+em 377,444 s. Também foram usados HTTP autenticado e o navegador Brave, com
+contas técnicas de analista e cliente, sem modificar pedidos ou retreinar modelos.
+Resultados por cenário: [evidências do fluxo](evidencias/genai/validacao_fluxo_2026-11-20.csv).
+
+- Autenticação real: acesso anônimo redirecionado ao login/401 nas APIs;
+  cliente recebeu 403 no dashboard, fila, consulta e exportação de PDF.
+  Origem incorreta e CSRF inválido foram rejeitados. Logout invalidou a sessão.
+- CatBoost VER0.7: 18.603 pedidos no lote, 1.486 pendentes em D−1 e 990
+  priorizados. Busca, paginação e detalhes conferidos; o filtro não altera a fila.
+  Os detalhes indicam ausências e distinguem score de probabilidade calibrada.
+- Windows e Docker Linux produziram os mesmos pedidos e a mesma ordem.
+  A comparação inicial por hash textual falhou; a investigação encontrou
+  diferença máxima de apenas 5,55 × 10^-17 nos scores. A verificação numérica
+  passou com tolerância 10^-10. Não houve mudança no modelo para obter isso.
+- Falha técnica isolada: na porta 8002, o SDK foi interceptado para responder
+  HTTP 503, sem chamada externa nem alteração de chave. O chat encerrou após
+  três tentativas, informou indisponibilidade, reabilitou o formulário e permitiu
+  nova tentativa. A fila permaneceu disponível, com os mesmos scores e seleção.
+- O PDF continuou funcionando sem GenAI, com indicadores, gráficos e resumo
+  determinístico identificado como contingência. As duas páginas foram
+  renderizadas e revisadas. O mesmo snapshot devolveu bytes idênticos em nova
+  exportação; indicadores extras enviados pelo cliente foram rejeitados (422)
+  e snapshot inexistente retornou 404.
+- No navegador, o botão de PDF abriu o diálogo Salvar e exibiu o aviso correto.
+  A gravação pelo diálogo foi cancelada devido a uma limitação de direcionamento
+  da automação de janelas; o arquivo efetivamente obtido pela API foi salvo e
+  conferido em [exemplo de contingência](../output/relatorios/EntregaCerta_AI_contingencia_API_2026-11-20.pdf).
+
+Correções: removido o sufixo duplicado “do lote” da capacidade no detalhe do
+dashboard; substituídas quatro referências antigas a “validação” na página de
+pedidos por “lote histórico consultado”. Os HTMLs publicados foram comparados
+byte a byte com os arquivos locais. A atualização via Terraform substituiu
+somente o contêiner da aplicação; banco e volume foram preservados.
+
+**GenAI real conferida após autorização explícita:** a revisão automática
+inicialmente bloqueou o envio externo. A equipe autorizou o Google Gemini a
+receber os indicadores agregados inspecionados (contagens, estatísticas de
+score e regras), sem nomes, e-mails, senhas ou IDs individuais. O fluxo HTTP
+foi então executado pela aplicação Docker na porta 8001, com autenticação
+normal, sem substituir o provedor ou o guard de acesso.
+
+- Chat: `gemini-3.5-flash-lite` foi o modelo solicitado e respondente; resposta
+  disponível, término `STOP`, uma tentativa e nenhum erro do provedor. O
+  endpoint respondeu em 7,297 s, incluindo a consulta do contexto. Foram
+  conferidos 18.603 pedidos, fila de 990 e risco relativo sem probabilidade
+  calibrada, com referências corretas E2, E3 e E30. O pedido de três frases
+  resultou em duas, mas os três pontos solicitados foram respondidos.
+- PDF: endpoint HTTP 200 em 3,547 s, com `X-Resumo-GenAI: incluido`. As duas
+  páginas foram renderizadas e revisadas; números, regras diárias, arredondamento
+  e interpretação do score estavam coerentes com o contexto enviado. Não foram
+  inventadas causas, métricas de desempenho ou ganhos. Nova exportação do
+  mesmo snapshot reproduziu os mesmos bytes.
+- A fila depois dessas chamadas manteve exatamente os scores, IDs e ordem
+  anteriores na aplicação Docker. Logout invalidou a sessão e a API voltou a
+  rejeitar o acesso anônimo (401).
+
+O [PDF com GenAI real](../output/relatorios/EntregaCerta_AI_GenAI_real_2026-11-20.pdf)
+tem SHA-256 `bf3c5a8169576fff4a50b4fe5ccffdf69962dfa97c2f0ecd591f1ff633a90023`.
+Esta rodada é uma amostra funcional (uma resposta de chat e um resumo de PDF),
+não uma taxa geral de acerto ou garantia de disponibilidade. A nova chamada
+real foi conferida via HTTP; não houve nova validação visual da resposta
+positiva no chat do navegador, pois a automação apresentou falhas de geometria
+da janela. A interface de falha, detalhes, filtros e abertura do download já
+haviam sido observados no navegador na etapa anterior.
+
+Scripts, respostas HTTP e log completo dos testes ficaram fora do repositório,
+em `../EntregaCertaAI_Pontos/validacao_fluxo_20261120/`, para não reintroduzir
+temporários nas pastas do projeto. Esta conferência valida funcionamento;
+não representa nova medição de recall, precision ou impacto operacional.
+
+Limpeza confirmada: as duas contas técnicas de cada rodada (contingência e
+GenAI real) e suas sessões foram removidas; os arquivos locais com as
+credenciais temporárias foram excluídos. O processo de falha simulada foi
+encerrado; a porta 8002 está fechada. A aplicação principal permaneceu
+disponível na porta 8001 (HTTP 200).

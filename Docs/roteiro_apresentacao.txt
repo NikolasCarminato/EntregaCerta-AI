@@ -1,0 +1,342 @@
+ENTREGACERTA AI — ROTEIRO V15
+25 slides | Quatro pessoas | 19min40s + 20s de margem
+
+Foco: analista e revisão humana. Área do cliente secundária e em testes.
+Tempos planejados; ensaiar em voz alta. Não há ensaio oral validado neste registro.
+
+PESSOA 1 | Slides 1 a 6 | 00:00 a 03:20 | Total 03:20
+Problema, escolha da base e EDA inicial
+
+SLIDE 01 — EntregaCerta AI
+Duração 00:15 | Relógio 00:00 a 00:15
+Bom dia. Somos a equipe EntregaCerta AI. Nosso projeto ajuda analistas de logística a priorizar pedidos com risco de atraso, usando dados reais e revisão humana.
+
+------------------------------------------------------------------------
+
+SLIDE 02 — O foco principal é apoiar o analista
+Duração 00:40 | Relógio 00:15 a 00:55
+O analista acompanha muitos pedidos e tem pouco tempo para identificar os casos urgentes. Sem uma prioridade clara, ele pode perceber o problema só depois do prazo.
+
+Nosso objetivo é organizar essa triagem: ordenar pedidos por risco e apresentar contexto para a revisão antes da entrega prometida. A área do cliente é secundária e está em testes. Ainda não medimos redução de atrasos ou horas economizadas em uma operação real.
+Indicação para a equipe: Destacar as dores da operação. Mencionar a área do cliente apenas ao final.
+
+------------------------------------------------------------------------
+
+SLIDE 03 — Por que escolhemos a Olist
+Duração 00:40 | Relógio 00:55 a 01:35
+Escolhemos a Olist porque reúne compras reais do comércio eletrônico brasileiro, com fonte pública e dados anonimizados. As datas de promessa e entrega permitem definir o atraso observado. As tabelas ligadas por IDs ajudam a consolidar pedidos e criar atributos de produto, distância e vendedor.
+
+O piloto usa 96.470 pedidos entregues elegíveis, com rótulos só por datas. É uma base útil para integrar análise, SQL e classificação, mas antiga e sem todos os sinais operacionais. Os dois recortes da tabela têm protocolos diferentes.
+Indicação para a equipe: Apontar as três razões e distinguir os dois recortes. Não ler toda a tabela.
+
+------------------------------------------------------------------------
+
+SLIDE 04 — Onde estão os pedidos e os atrasos
+Duração 00:30 | Relógio 01:35 a 02:05
+Os mapas distinguem volume de pedidos, quantidade de atrasos e taxa de atraso. Ter muitos atrasos em números absolutos não significa ter a maior taxa.
+
+No recorte só com atrasos confirmados por datas, São Paulo tem 4,53% e o Nordeste, 12,78%. Isso descreve uma diferença regional; não identifica sua causa. Os mapas completos incluem também rótulos inferidos por PLN.
+Indicação para a equipe: Apontar os três mapas da esquerda para a direita. Distinguir as taxas citadas do conjunto completo dos mapas.
+
+------------------------------------------------------------------------
+
+SLIDE 05 — Pedidos e atrasos ao longo do tempo
+Duração 00:30 | Relógio 02:05 a 02:35
+Os dois painéis mostram pedidos e atrasos ao longo dos trimestres. O primeiro trimestre de 2018 concentra o maior volume nas duas bases.
+
+Essas curvas mostram contagens, não taxas de risco. Os períodos de borda também são parciais. A evolução temporal reforça a necessidade de avaliar o modelo em pedidos posteriores ao treino.
+Indicação para a equipe: Comparar os painéis sem atribuir as variações a causas que não investigamos.
+
+------------------------------------------------------------------------
+
+SLIDE 06 — Engenharia inicial e seus limites
+Duração 00:45 | Relógio 02:35 a 03:20
+Começamos com hipóteses logísticas: peso, volume, distância, frete, prazo e características do vendedor. Usamos Data Wrangler, Pandas e Matplotlib na exploração.
+
+Também testamos PCA, cinco folds estratificados, CTGAN, PLN e automação. Nesse diagnóstico, a logística alcançou F1 de 27,02%, mas havia rótulos mistos e possíveis vazamentos por nota global e status final, além de transportadora simulada.
+
+Esses resultados motivaram a revisão do problema e dos atributos; não validam o piloto atual.
+Indicação para a equipe: Cinco folds estratificados não são validação temporal. Não apresentar o resultado antigo como equivalente ao CatBoost.
+Transição incluída no tempo: A Pessoa 2 explica como enriquecemos e preparamos os dados do piloto.
+
+------------------------------------------------------------------------
+
+PESSOA 2 | Slides 7 a 13 | 03:20 a 08:30 | Total 05:10
+Enriquecimento, EDA, protocolo, BPMN e DER
+
+SLIDE 07 — Quatro fontes para enriquecer os pedidos
+Duração 00:35 | Relógio 03:20 a 03:55
+O enriquecimento usa quatro fontes: marketing da Olist, cadastro preparado de municípios, matriz de rotas rodoviárias e clima histórico por estado.
+
+Elas acrescentam contexto comercial e logístico, mas a cobertura é parcial. A matriz rodoviária representa a rede de 2024 aplicada a pedidos antigos. O clima veio de um CSV declarado como INMET, sem reauditoria da origem bruta. Mais fontes não garantem mais qualidade.
+Indicação para a equipe: dist_brasil é rodovia; weather_daily é clima. As coberturas deste slide não usam necessariamente o mesmo recorte do treino efetivo.
+
+------------------------------------------------------------------------
+
+SLIDE 08 — Qualidade e cobertura dos atributos
+Duração 00:45 | Relógio 03:55 a 04:40
+Aqui medimos as ausências nos 5.655 pedidos do treino efetivo em D-1. Oito campos estão totalmente vazios. Outros atributos comerciais têm 99,5% de ausência, e os de distância rodoviária chegam a cerca de 86%.
+
+Os históricos apresentam cobertura melhor. Valores numéricos ausentes ficam como NaN; categorias recebem um marcador.
+
+A captura do Data Wrangler ilustra a inspeção inicial em outra base. A mensagem é que precisamos verificar a informação disponível, e não apenas contar colunas.
+Indicação para a equipe: Destacar os grupos de barras, sem ler os 20 nomes. Os 641 ausentes da captura não são uma contagem do treino CatBoost.
+
+------------------------------------------------------------------------
+
+SLIDE 09 — Tratamento e sinais do piloto CatBoost
+Duração 00:45 | Relógio 04:40 a 05:25
+Agregamos itens e pagamentos antes das junções, mantendo uma linha por pedido. Depois, construímos os atributos disponíveis no momento da análise.
+
+Entre os sinais mais usados estão o trânsito restante estimado na rota, o calendário, o despacho em relação ao limite, o volume e o histórico do vendedor.
+
+Os históricos só consideram entregas anteriores ao checkpoint. A entrega futura, avaliações posteriores e o status final ficam fora das entradas. A importância interna indica associação, não a causa de um atraso.
+Indicação para a equipe: Apontar dois exemplos da tabela. As importâncias são globais; não são percentuais de chance de atraso.
+
+------------------------------------------------------------------------
+
+SLIDE 10 — Sobreposição e limites da CTGAN
+Duração 00:45 | Relógio 05:25 a 06:10
+À esquerda, os pedidos pontuais e atrasados têm distribuições bastante sobrepostas de distância e peso. As medianas são próximas: cerca de 493 e 520 quilômetros, e 800 e 900 gramas. Esses atributos isolados não separam bem as classes.
+
+À direita, no experimento antigo, adicionar CTGAN ao treino reduziu o F1 dos cinco classificadores na validação e no teste reais. Por exemplo, na validação, a logística caiu de 0,270 para 0,239.
+
+Esse resultado não prova que toda GAN falhe e não pertence ao protocolo do CatBoost.
+Indicação para a equipe: Os boxplots usam o treino efetivo em D-1. Os gráficos de CTGAN usam outro experimento. Extremos foram ocultos apenas no desenho.
+
+------------------------------------------------------------------------
+
+SLIDE 11 — Partições e controle temporal
+Duração 00:50 | Relógio 06:10 a 07:00
+A tabela mostra conjuntos diferentes. No CatBoost, o ajuste usa 5.655 pedidos ainda pendentes, com desfechos já conhecidos antes da validação. Nesse grupo, 73,6% atrasaram.
+
+A validação e o teste incluem pedidos já entregues, mas só os pendentes recebem score: 1.017 na validação e 1.486 no teste.
+
+O experimento antigo usa cinco folds estratificados; outros testes avaliaram três períodos futuros. São protocolos distintos. Como o teste já orientou explorações anteriores, os resultados são retrospectivos. Precisamos confirmá-los em um período novo, com as escolhas congeladas.
+Indicação para a equipe: Diferenciar coorte total, conjunto de ajuste e pedidos pontuados. Não chamar o teste reutilizado de teste cego.
+
+------------------------------------------------------------------------
+
+SLIDE 12 — BPMN e regras da revisão humana
+Duração 00:50 | Relógio 07:00 a 07:50
+O analista autenticado solicita a fila. O backend verifica o acesso, consulta os pedidos e aplica o CatBoost apenas aos pendentes elegíveis em D-1: meia-noite do dia anterior à promessa.
+
+A fila seleciona os maiores scores até completar 65% dos pendentes de cada dia, arredondando para cima. Essa é uma cota de revisão, não uma probabilidade de atraso.
+
+O analista consulta detalhes e pode gerar um relatório. Se a GenAI falhar, o PDF usa um resumo factual identificado. A decisão continua humana, sem ações automáticas em transportadoras.
+Indicação para a equipe: Percorrer as raias e a decisão de gerar PDF. O fluxo é solicitado pelo analista; não é um agendamento automático.
+
+------------------------------------------------------------------------
+
+SLIDE 13 — DER do banco de dados
+Duração 00:40 | Relógio 07:50 a 08:30
+O banco separa três responsabilidades. Em app_web ficam usuários, sessões, pedidos demonstrativos e feedback do assistente. As chaves estrangeiras ligam esses registros aos usuários.
+
+O modelo atual lê atributos e contexto em JSONB no schema modelo_ver07. À direita, public preserva a base anterior e a view que reunia os dados para a MLP. As áreas são independentes: a loja não está ligada por chave estrangeira à inferência histórica.
+Indicação para a equipe: Apontar os três schemas. PK identifica registros; FK relaciona tabelas. O tracejado representa uma associação lógica sem FK.
+Transição incluída no tempo: A Pessoa 3 apresenta os modelos e a qualidade da triagem.
+
+------------------------------------------------------------------------
+
+PESSOA 3 | Slides 14 a 20 | 08:30 a 14:05 | Total 05:35
+Modelos, métricas e limitações
+
+SLIDE 14 — Modelos anteriores: desempenho e fila
+Duração 01:00 | Relógio 08:30 a 09:30
+Aqui, os seis modelos usam o mesmo teste antigo: 25.550 pedidos, com 1.124 atrasos. A meta de recall na validação era de pelo menos 95%.
+
+A logística encontrou 1.104 atrasos no teste, mas também colocou 20.577 pedidos pontuais na fila. O recall foi 98,22%, porém a revisão alcançou 84,86% dos pedidos e o F1 ficou em 9,68%.
+
+HGB, MLP, Random Forest, Extra Trees e RF com GMM também apresentaram uma troca difícil entre cobertura e esforço. O HGB, inclusive, não manteve 95% de recall no teste.
+
+Trocar o algoritmo não resolveu a carga operacional. Esse cenário é diferente do CatBoost em D-1.
+Indicação para a equipe: Explicar uma matriz. Linhas: resultado real. Colunas: fora ou dentro da fila. Não ler as seis matrizes.
+
+------------------------------------------------------------------------
+
+SLIDE 15 — Como o CatBoost aprende e gera o score
+Duração 01:00 | Relógio 09:30 a 10:30
+Na analogia de corrida, CatBoost é o piloto: aprende com as voltas de treino, que aqui são pedidos históricos com resultado conhecido.
+
+Ele constrói árvores em sequência. Cada nova árvore ajusta a previsão do conjunto para reduzir a Logloss, uma medida do erro. As contribuições são combinadas, e a função sigmoide gera um score entre zero e um.
+
+A VER0.7 usa 420 árvores, profundidade máxima cinco e taxa de aprendizado de 0,035. O modelo trata categorias internamente e calcula pesos de classe no treino.
+
+O score serve para ordenar o risco. Sua calibração como probabilidade ainda não foi validada.
+Indicação para a equipe: Usar a analogia na abertura e acompanhar os três passos. L2 igual a 12 é informação de apoio.
+
+------------------------------------------------------------------------
+
+SLIDE 16 — Optuna: busca de hiperparâmetros
+Duração 00:40 | Relógio 10:30 a 11:10
+Se CatBoost é o piloto, Optuna é o engenheiro que testa as regulagens. Cada trial avalia uma combinação de profundidade, taxa de aprendizado e regularização.
+
+No código de apoio, as configurações são comparadas pela AP em folds temporais. O TPE usa os resultados anteriores para orientar novas tentativas.
+
+É importante distinguir os papéis: a VER0.7 reproduz parâmetros fixos, sem nova busca Optuna nessa rodada. Não atribuímos a ele um ganho específico que não foi medido.
+Indicação para a equipe: AP avalia o ranking e não é o F1 de uma fila. Não afirmar que o Optuna escolheu especificamente as 420 árvores.
+
+------------------------------------------------------------------------
+
+SLIDE 17 — A escolha do piloto CatBoost VER0.7
+Duração 00:45 | Relógio 11:10 a 11:55
+Entre duas variantes, escolhemos a de 111 atributos pelo F1 na validação: 70,90%, contra 69,87% da variante com 114.
+
+No teste, mantendo as mesmas 990 revisões, o CatBoost encontrou 82,29% dos atrasos. A regra de referência escolhida na validação encontrou 69,94%.
+
+Outra regra simples ficou muito próxima do modelo no teste, com F1 de 66,43%. Portanto, não demonstramos superioridade sobre toda alternativa. A escolha considera o protocolo e a utilidade da fila, e a avaliação continua exploratória.
+Indicação para a equipe: Começar pela seleção na validação. Comparar o teste com a mesma quantidade de revisões.
+
+------------------------------------------------------------------------
+
+SLIDE 18 — 553 dos 672 atrasos sinalizados para revisão
+Duração 00:50 | Relógio 11:55 a 12:45
+Dos 672 atrasos observados entre os pendentes, 553 entraram na fila. Isso corresponde a 82,29% de recall. Outros 119 atrasos ficaram fora.
+
+Dos 990 pedidos sinalizados, 553 atrasaram e 437 foram pontuais. A precision foi de 55,86% e o F1, de 66,55%.
+
+A matriz inclui apenas os 1.486 pedidos pontuados. A accuracy nesse grupo é 62,58%.
+
+Esses números medem identificação histórica, não atrasos evitados. Ainda há erros e espaço para investigar melhorias, sem garantir ganhos futuros.
+Indicação para a equipe: Apontar 553, 437 e 119. Não chamar recall de acurácia nem incluir os já entregues para inflar o resultado.
+
+------------------------------------------------------------------------
+
+SLIDE 19 — Quanto trabalho chega ao analista?
+Duração 00:45 | Relógio 12:45 a 13:30
+A fila tem 990 pedidos: 5,32% do lote inteiro, mas 66,62% dos pendentes. O denominador muda bastante a interpretação. O arredondamento diário explica superar a cota de 65%.
+
+Revisar todos os 1.486 pendentes encontraria todos os atrasos dessa coorte. A política reduz 496 revisões, mas deixa 119 atrasos de fora.
+
+A AP de 0,7303 resume o ranking. A curva usa limiares globais; a fila usa cotas diárias. Essa redução é de revisões potenciais, não de horas já economizadas em operação.
+Indicação para a equipe: Apontar os dois denominadores. Não colocar a cota diária como se fosse um único corte na curva.
+
+------------------------------------------------------------------------
+
+SLIDE 20 — Limitações e próximos testes
+Duração 00:35 | Relógio 13:30 a 14:05
+Dezesseis dos 111 atributos tiveram importância zero neste modelo. Isso não prova que sejam inúteis em qualquer situação; sua remoção exige comparação na validação.
+
+Os limites incluem teste reutilizado, dados antigos e cobertura parcial das fontes externas. Mais dados representativos, melhores atributos e tempo para ajustar podem ajudar, mas mais treino sozinho não garante ganho. Precisamos confirmar o desempenho em dados novos.
+Indicação para a equipe: Importância não demonstra causa. Impacto operacional e ROI ainda não foram medidos.
+Transição incluída no tempo: Agora, a Pessoa 4 demonstra o fluxo do analista.
+
+------------------------------------------------------------------------
+
+PESSOA 4 | Slides 21 a 25 | 14:05 a 19:40 | Total 05:35
+Demonstração, PDF, prompts, LGPD e encerramento
+
+SLIDE 21 — O analista em ação
+Duração 03:00 | Relógio 14:05 a 17:05
+
+Indicação para a equipe: Demonstração de 3 minutos detalhada abaixo. Preparar previamente a sessão, o lote de teste e o relatório. A área do cliente fica fora do percurso.
+
+14:05 a 14:30 — Login e contexto
+Na tela: Entrar com o perfil de analista e mostrar a identificação da reprodução histórica.
+Esta é uma demonstração histórica da Olist, com acesso restrito ao analista. Não são pedidos atuais em transporte.
+
+14:30 a 15:05 — Carregar a fila
+Na tela: Gerar a fila ou mostrar o lote já carregado. Destacar totais e pendentes.
+O lote contém 18.603 pedidos. A política selecionou 990 revisões, entre os 1.486 ainda pendentes. Os já entregues ficam fora da pontuação.
+
+15:05 a 15:40 — Filtros e detalhes
+Na tela: Filtrar e abrir um pedido priorizado, com score e contexto.
+O score organiza o risco relativo. Conferimos os dados disponíveis no checkpoint; ele não confirma o atraso nem determina sozinho a ação.
+
+15:40 a 16:15 — Explicação assistida
+Na tela: Fazer uma pergunta breve sobre os indicadores e conferir as referências.
+A GenAI recebe os fatos autorizados e ajuda a interpretar a análise. As referências permitem conferir os números. Se o provedor falhar, a indisponibilidade fica explícita.
+
+16:15 a 16:55 — Relatório e decisão
+Na tela: Gerar ou abrir um relatório preparado. Mostrar indicadores, resumo e limites.
+O relatório reúne indicadores e resumo. O analista define o acompanhamento; a aplicação não executa ações em transportadoras. O resumo factual de contingência deve ficar identificado quando a GenAI falhar.
+
+16:55 a 17:05 — Retorno aos slides
+Na tela: Voltar ao slide 22 até 17:05.
+Agora mostramos um exemplo de PDF que já foi exportado pela aplicação.
+Contingência: se houver falha, identificar o resumo factual ou a gravação de backup. Voltar aos slides até 17:05.
+
+------------------------------------------------------------------------
+
+SLIDE 22 — Relatório com explicação assistida por GenAI
+Duração 00:35 | Relógio 17:05 a 17:40
+Este é um PDF que a aplicação exportou em 13 de novembro. Ele usa a validação anterior, por isso seus números diferem do piloto CatBoost.
+
+A primeira página mostra indicadores e gráficos calculados pelo sistema. Na segunda, a GenAI explica o significado da fila e ressalta que score não é probabilidade e que a decisão continua humana. O documento completo está no link.
+Indicação para a equipe: Mostrar a página e o trecho ampliado. Os 24.667 pedidos e 2.466 revisões pertencem à validação anterior. Não atribuir os cálculos à GenAI.
+Transição incluída no tempo: Na sequência, mostramos os prompts usados no desenvolvimento.
+
+------------------------------------------------------------------------
+
+SLIDE 23 — Vibe coding e prompt engineering
+Duração 01:00 | Relógio 17:40 a 18:40
+À esquerda está o prompt completo do frontend. À direita, ampliamos a orientação sobre integração com APIs e indisponibilidade. O documento explicita o comportamento esperado. Vamos relacionar essas instruções à experiência real da equipe.
+Indicação para a equipe: Usar cerca de 20 segundos nesta abertura. Reservar os 40 segundos restantes para um exemplo verdadeiro de solicitação, revisão e verificação feito pela equipe. As imagens são estáticas; o TXT completo está no link.
+18:00 a 18:40: reservar cerca de 60 a 70 palavras para um exemplo verdadeiro de solicitação, revisão e verificação feito pela equipe.
+
+------------------------------------------------------------------------
+
+SLIDE 24 — LGPD e segurança no painel do analista
+Duração 00:30 | Relógio 18:40 a 19:10
+O painel exige perfil de analista também no backend. As senhas usam hash, as sessões expiram e os segredos ficam fora do repositório.
+
+O analista deve conferir as respostas da GenAI e evitar dados pessoais desnecessários. Para uso real, ainda precisamos formalizar finalidade, base legal, retenção e avaliação de vieses. Os controles não significam certificação de conformidade.
+Indicação para a equipe: Não mostrar senhas ou chaves. Distinguir controles implementados de requisitos para uma operação real.
+
+------------------------------------------------------------------------
+
+SLIDE 25 — A arquitetura que sustenta o painel do analista
+Duração 00:30 | Relógio 19:10 a 19:40
+O painel usa HTML, CSS e JavaScript. Python e FastAPI conectam PostgreSQL, CatBoost e Gemini. Terraform já gerencia a infraestrutura Docker local: contêineres, rede e armazenamento.
+
+Entregamos apoio à priorização com decisão humana. O próximo passo é validar em dados novos e com analistas. Obrigado.
+Indicação para a equipe: Terraform está implementado localmente. Não afirmar deploy em nuvem. Encerrar a fala até 19:40.
+
+------------------------------------------------------------------------
+
+19:40 a 20:00 — margem para pausas e transições. Não acrescentar conteúdo.
+
+Preparação do ensaio
+Consulta da equipe, fora da fala cronometrada
+Antes de apresentar
+Conferir banco, modelo VER0.7, login do analista, lote de teste e relatório. Usar o modo de execução documentado no
+projeto. Deixar tudo aberto antes da fala; não instalar dependências, treinar ou provisionar na frente da banca.
+Ensaio com as quatro pessoas
+Ensaiar em voz alta com cronômetro contínuo. Conferir as passagens em 03:20, 08:30 e 14:05. As falas sugeridas têm ritmo
+estimado de até 125 palavras por minuto; números, gráficos e cliques também consomem tempo.
+Backup da demonstração
+Preparar vídeo de até 3 minutos com o mesmo fluxo do analista e um relatório local. Identificar o uso de gravação se for
+necessário. O roteiro não confirma que esse backup já existe.
+PowerPoint e prompt
+Extrair o pacote da V15 mantendo PPTX, roteiro, prompt_frontend.txt e exemplo_relatorio_genai_2026-11-13.pdf na
+mesma pasta. Conferir os links dos slides 22 e 23 no modo Apresentação de Slides do PowerPoint de desktop. As imagens
+do prompt são estáticas.
+Se houver atraso no relógio
+Resumir as matrizes aos destaques do slide 14, evitar ler listas de atributos e abrir um relatório preparado se houver
+espera da API. Preservar as limitações do estudo e o encerramento. Não usar a margem para visitar a loja em testes.
+Distinções que precisam permanecer claras
+Bases e protocolos: kfold_pca com rótulos mistos; CTGAN com avaliação real em outro experimento; comparação antiga de
+25.550 pedidos; piloto CatBoost em D-1. Não misturar seus resultados.
+553 / 672 = 82,29% de recall. 553 / 990 = 55,86% de precision. F1 = 66,55%. São atrasos identificados no histórico, não atrasos
+evitados.
+990 revisões = 66,62% dos pendentes ou 5,32% do lote completo. A cota diária de 65% não é uma chance de atraso. O score
+não foi validado como probabilidade calibrada.
+Optuna é a busca de hiperparâmetros do código de apoio. A VER0.7 usa parâmetros fixos e não executou uma nova busca
+nessa rodada.
+O DER mostra schemas independentes. Atributos de enriquecimento chegam ao banco como JSONB consolidado; não há uma
+tabela separada para cada fonte. A loja não alimenta automaticamente a inferência histórica.
+O PDF do slide 22 usa a validação anterior: 24.667 pedidos e 2.466 revisões. É um exemplo real de exportação e não a avaliação
+do CatBoost VER0.7.
+Teste reutilizado e cobertura limitada: resultados exploratórios. Mais dados e ajustes podem ajudar, mas o ganho deve ser
+confirmado em dados novos. Impacto e ROI não foram medidos.
+Referência do roteiro
+Apresentação EntregaCerta AI V15, 25 slides e notas dos apresentadores. As falas foram ajustadas ao tempo de cada slide. Este
+documento não substitui o ensaio oral.
+ENTREGACERTA AI
+Roteiro V15 / Ensaio
+25 slides / 19min40s de apresentação + 20s de margem
+14 / 14
+
+
+Referência: output/apresentacao/EntregaCerta_AI_apresentacao_v15.pptx.
+PDF correspondente: output/apresentacao/EntregaCerta_AI_roteiro_4_pessoas_v15.pdf.

@@ -31,11 +31,20 @@ __pycache__/
 *.egg-info/
 *.log
 
-# Estado e credenciais da infraestrutura futura
+# Estado, planos e executável local da infraestrutura
 .terraform/
+.terraform-local/
 *.tfstate
 *.tfstate.*
 *.tfplan
 *.tfvars
 *.tfvars.json
 !*.example.tfvars
+
+.chart-data-*/
+
+tmp/
+
+# Downloads dos datasets de enriquecimento
+/Dados/Datasets para Enriquecimento/*.zip
+/Dados/Datasets para Enriquecimento/dist_brasil.csv

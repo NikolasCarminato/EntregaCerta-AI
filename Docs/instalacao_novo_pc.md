@@ -1,5 +1,120 @@
 # Guia de inicialização — CatBoost VER0.7
 
+## Opção com Terraform e Docker local
+
+Esta opção gerencia a aplicação e o PostgreSQL no Docker, sem contratar nuvem.
+O modo direto com Python continua descrito nas seções seguintes.
+
+Pré-requisitos: Docker Desktop em execução, Python da `.venv`, `.env` preenchido,
+dados/modelos da versão atual e Terraform >= 1.14, < 2.0. Instale o Terraform
+pela [fonte oficial](https://developer.hashicorp.com/terraform/install) ou coloque
+o executável portátil em `.terraform-local/terraform.exe` no Windows.
+O executável é local e ignorado pelo Git; neste computador foi utilizado 1.14.9,
+com SHA-256 do ZIP conferido contra o arquivo oficial de checksums.
+
+Na raiz do projeto:
+
+```powershell
+# Construir a imagem e conferir o plano, sem criar/substituir contêineres.
+.\.venv\Scripts\python.exe infra/local/gerenciar.py planejar
+
+# Aplicar a infraestrutura e abrir depois a URL informada.
+.\.venv\Scripts\python.exe infra/local/gerenciar.py iniciar --sem-build
+```
+
+Acesse **http://localhost:8001**. O comando também funciona de outra pasta,
+desde que o caminho do script esteja correto. Use `--porta 8002` se precisar
+de outra porta, sempre com o mesmo valor em planejar/iniciar. Para atualizar
+código, frontend ou modelo empacotado, execute `iniciar` sem `--sem-build`.
+O Terraform só troca o contêiner da aplicação quando a imagem/configuração muda.
+
+Para conferir a execução real e a ausência de mudanças pendentes:
+
+```powershell
+docker exec entregacerta_ai_app python main.py verificar
+.\.venv\Scripts\python.exe infra/local/gerenciar.py planejar --sem-build
+docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+```
+
+O primeiro comando consulta o PostgreSQL e executa o modelo salvo sem escrever
+no banco nem chamar o Gemini. Após a instalação, o segundo deve informar
+`Plano: nenhuma alteração`. O Docker também verifica periodicamente a resposta
+HTTP da API; o comando `verificar` complementa essa checagem com banco e ML.
+
+Os testes do projeto continuam disponíveis pela `.venv`:
+
+```powershell
+.\.venv\Scripts\python.exe main.py testar --postgres
+```
+
+Eles usam schemas temporários e respostas simuladas do provedor de GenAI.
+Na implantação local de 18/11/2026, a suíte de **101 testes** também foi executada
+e aprovada no Linux da imagem, montando testes, dados e modelos somente para
+leitura. O diagnóstico HTTP real e a parada/reabertura foram conferidos à parte.
+
+```powershell
+# Desligar somente a aplicação; manter banco e volume.
+.\.venv\Scripts\python.exe infra/local/gerenciar.py parar
+
+# Voltar a abrir usando a imagem já construída.
+.\.venv\Scripts\python.exe infra/local/gerenciar.py iniciar --sem-build
+```
+
+### Como o banco existente é preservado
+
+O script identifica `entregacerta_ai_postgres_db`, seu volume e sua rede reais;
+confere a configuração e os importa no estado Terraform. Importar não copia nem
+recria o banco. Os recursos persistentes têm `prevent_destroy` e `ignore_changes`;
+o plano também é rejeitado se propuser alterá-los durante a adoção. Não há carga
+automática de CSV, alteração de tabelas ou execução de treino.
+
+Esses recursos foram protegidos deliberadamente: mudanças futuras de versão,
+senha, porta ou armazenamento do PostgreSQL exigem revisão específica, não um
+`apply` automático. Evite gerenciar os mesmos recursos simultaneamente por
+comandos destrutivos do Compose. Não use `docker compose down -v`, remoção de
+volumes ou limpeza geral do Docker para parar esta aplicação.
+
+O `.env` fica montado somente para leitura em `/app/.env` e não entra na imagem.
+A API usa o hostname do PostgreSQL na rede Docker, porta interna 5432 e origens
+locais compatíveis com a porta escolhida. O banco continua acessível pelo caminho
+local anterior. O contêiner da aplicação expõe somente `127.0.0.1` e usa um processo
+Uvicorn; as conversas e análises temporárias continuam expirando/perdendo-se ao
+reiniciar, conforme o comportamento atual. ML e arquivos do frontend não mudam.
+
+Arquivos: `Dockerfile`, `.dockerignore`, `infra/local/main.tf`,
+`infra/local/gerenciar.py`, `infra/local/requirements.txt` e o lock de providers.
+O Dockerfile mantém dependências de execução separadas das de notebooks.
+O Python auxiliar constrói a imagem pelo Docker CLI, importa recursos e valida
+o plano; os contêineres, rede e volume são recursos declarados no Terraform.
+
+**Estado local é sensível:** a importação do PostgreSQL inclui seu ambiente no
+`terraform.tfstate`. Estado, backups de estado e planos não devem ser enviados ao
+Git nem compartilhados. As regras de `.gitignore` os excluem; `.terraform.lock.hcl`
+deve ser versionado. A chave do Gemini não é colocada em variáveis Terraform.
+
+### Computador sem banco previamente carregado
+
+Se o contêiner e o volume ainda não existirem, a mesma configuração cria um
+PostgreSQL 17 vazio. Ela recusa um volume antigo sem o contêiner esperado, para
+não assumir uma recuperação sem revisão. Depois da primeira criação, carregue
+o banco uma única vez, com a imagem já iniciada:
+
+```powershell
+docker exec entregacerta_ai_app python main.py preparar-catboost --sem-docker
+docker exec -it entregacerta_ai_app python main.py criar-analista --nome "Nome" --email "email@equipe.com"
+docker exec entregacerta_ai_app python main.py verificar
+```
+
+Esses comandos usam os artefatos reais já empacotados e não treinam modelos.
+No computador atual, a base e as contas existentes são reutilizadas e essa carga
+não é necessária. O catálogo usa somente produtos e itens dos CSVs Olist.
+
+O comando `planejar` também constrói a imagem e importa os recursos existentes
+no estado local. Se o PostgreSQL existente estiver parado, inicia esse mesmo
+contêiner para permitir a aplicação posterior. Não cria um segundo banco.
+
+---
+
 Use o **PowerShell na raiz do repositório**, a pasta que contém `main.py`.
 No VS Code: Terminal → Novo Terminal. Não execute os módulos de `src` isoladamente.
 

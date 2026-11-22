@@ -110,3 +110,15 @@ Pedido da equipe: simplificar a compreensão dos dois scripts para pessoas que a
 Ação: criado Notebooks/01_preparacao_dados.ipynb com explicações, 35 células curtas (até 15 linhas de código por célula), cálculos visíveis desde sete CSVs originais até as matrizes de ML e dois gráficos descritivos. Scripts, notebooks da equipe e dados existentes preservados. Atualizados README, requirements e documento central, sem documentação paralela.
 Execução final: 35 células sequenciais, zero erros/avisos salvos; 91.390 pedidos e 159 atributos transformados; alvos, metadados, matrizes e CSV compatíveis com os artefatos anteriores. Hashes de 16 arquivos intactos. Os 10 testes existentes passaram; pip check sem dependências quebradas. Os dois gráficos foram inspecionados individualmente; a revisão visual integral da prévia HTML não ficou disponível por bloqueio do protocolo file: no navegador do ambiente.
 Limites: sem treinamento de modelos, carga SQL, aplicação ou chamada de LLM; mantidas as regras e limitações acadêmicas registradas. A equipe deve abrir o notebook no VS Code, escolher .venv (Python 3.12) e executar as células em ordem para estudar o processo.
+
+Registro de 18/11/2026 - diagramas do projeto atual
+Pedido da equipe: atualizar o BPMN e criar o DER e o diagrama de arquitetura com base no projeto atual, sem mexer no visual, na intro nem no ML. Artigo não será necessário.
+Ação: BPMN atualizado para CatBoost D−1/cota diária, loja demonstrativa e assistente; DER físico com 12 tabelas e oito FKs; arquitetura separando pesquisa, web, banco, memória temporária e Gemini. Fontes editáveis BPMN/draw.io e imagens SVG/PNG em Docs, com links no README.
+Validação: catálogo PostgreSQL consultado em transação somente leitura; 104 colunas das tabelas conferidas. BPMN validado por XSD e importado/exportado por bpmn-js sem avisos. Imagens inspecionadas. Arquivos de frontend, intro, código da aplicação, ML e ambiente preservados por comparação SHA-256.
+Escopo: artigo removido dos entregáveis atuais por decisão da equipe; referências antigas preservadas como histórico. Sem alteração do banco, treinamento ou chamada de GenAI.
+
+
+Registro de 18/11/2026 - Terraform e Docker local
+Pedido da equipe: implementar Terraform com Docker local para a aplicação e PostgreSQL de forma simples, preservando banco atual, visual, intro e ML; executar os testes necessários.
+Ação: imagem Python sem root e sem segredos; main.tf para rede, volume e contêineres; script de operação que importa e protege recursos existentes. Aplicação na porta 8001, banco original reutilizado. Guia, README e arquitetura atualizados; nenhuma alteração em src, frontend ou ML.
+Validação: 101 testes aprovados no Linux da imagem, diagnóstico de inferência e HTTP real, plano destrutivo bloqueado, parada/reabertura com plano sem alterações. Backup do banco criado; 12 tabelas e 267 arquivos protegidos mantiveram seus hashes. Sem deploy em nuvem e sem chamadas reais ao Gemini.

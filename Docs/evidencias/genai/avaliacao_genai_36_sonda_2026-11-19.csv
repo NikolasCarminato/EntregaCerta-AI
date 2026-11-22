@@ -1,0 +1,2 @@
+﻿executado_em_utc,modelo_solicitado,modelo_respondido,pergunta,resposta,disponivel,termino,http,categoria,tipo_erro,latencia_segundos,tentativas
+2026-11-19T14:24:44.497486+00:00,gemini-3.6-flash,,Responda apenas OK.,,False,,503,servico,ServerError,2.532,1

@@ -1,0 +1,29 @@
+# Lista de inclusão: chaves, estado Terraform, notebooks e backups não entram.
+**
+!Dockerfile
+!.dockerignore
+!main.py
+!infra/
+!infra/local/
+!infra/local/requirements.txt
+!src/
+!src/**
+!frontend/
+!frontend/**
+!Modelos/
+!Modelos/catboost_ver07/
+!Modelos/catboost_ver07/config.json
+!Modelos/catboost_ver07/modelo.cbm
+!Modelos/catboost_ver07/pedidos_d1.parquet
+!Modelos/catboost_ver07/auditoria_previsoes.csv
+!Modelos/catboost_ver07/reproducao.json
+!Modelos/preprocessador_rede.joblib
+!Modelos/rede_neural.pt
+!Dados/
+!Dados/Brazilian Logistic/
+!Dados/Brazilian Logistic/olist_products_dataset.csv
+!Dados/Brazilian Logistic/olist_order_items_dataset.csv
+**/__pycache__/
+**/*.pyc
+frontend/versoes/
+**/.env*
