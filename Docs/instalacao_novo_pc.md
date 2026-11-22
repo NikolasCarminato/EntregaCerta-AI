@@ -1,5 +1,69 @@
 # Guia de inicialização — CatBoost VER0.7
 
+## Atualizar o projeto da equipe e abrir pelo Docker
+
+Use este fluxo quando o computador já tiver `.venv`, `.env`, Terraform e os
+dados/modelos configurados. Para a primeira instalação, consulte os
+pré-requisitos e a seção **Computador sem banco previamente carregado** abaixo.
+
+**1. Abra o Docker Desktop e o terminal PowerShell na raiz do projeto**, onde
+estão `main.py` e a pasta `infra`. No VS Code: Terminal → Novo Terminal.
+
+**2. Confira suas alterações e atualize a branch da equipe:**
+
+```powershell
+git status --short
+```
+
+Se aparecerem arquivos modificados ou novos, revise e salve seu trabalho em um
+commit antes de continuar. Não descarte alterações de integrantes da equipe.
+Com o diretório de trabalho limpo, execute:
+
+```powershell
+git switch rnn-train
+git pull --ff-only origin rnn-train
+```
+
+Se algum comando falhar ou o Git informar divergência entre as branches, pare
+e compartilhe a mensagem com a equipe. O fluxo normal não exige `reset`,
+`--force` ou clonar novamente. Execute os comandos na ordem indicada.
+O pull atualiza os arquivos versionados; o `.env`, as contas e o banco locais
+não são copiados de outro integrante. Preserve suas senhas e chaves; se o
+`.env.example` mudar, compare as novas opções com seu `.env`.
+
+**3. Reconstrua a imagem e atualize a aplicação:**
+
+```powershell
+.\.venv\Scripts\python.exe infra/local/gerenciar.py iniciar
+```
+
+Aguarde o comando terminar e informar a URL da aplicação. Ele constrói a imagem
+com o código recebido no pull, instala nela as dependências do Dockerfile e
+aplica a configuração Terraform. O banco e o volume existentes são preservados.
+Não é necessário parar a aplicação manualmente antes desse comando.
+**Após um pull, não acrescente `--sem-build`: essa opção reutiliza a imagem
+anterior e pode deixar o sistema com o código antigo.**
+
+**4. Abra http://localhost:8001 e entre com sua conta de analista.**
+Se a página já estava aberta, use **Ctrl+F5** para atualizar o frontend.
+Neste modo a aplicação roda no contêiner; não execute também `main.py iniciar`
+para tentar abrir a mesma atualização na porta 8000.
+
+**5. Confira a conexão com o banco e a inferência:**
+
+```powershell
+docker exec entregacerta_ai_app python main.py verificar
+```
+
+Com a base padrão carregada e a partição `teste`, espere **30.778 entradas no
+banco, 18.603 pedidos no lote e 990 na fila**. Esse diagnóstico não chama o
+Gemini nem treina o modelo. Se o banco estiver vazio, siga a carga inicial
+descrita abaixo; um pull não transfere o volume PostgreSQL de outro computador.
+
+Para apenas reabrir a mesma versão, sem alterações desde a última construção,
+pode usar `iniciar --sem-build`. Não é preciso executar notebooks para atualizar
+ou abrir a aplicação com o modelo salvo.
+
 ## Opção com Terraform e Docker local
 
 Esta opção gerencia a aplicação e o PostgreSQL no Docker, sem contratar nuvem.
