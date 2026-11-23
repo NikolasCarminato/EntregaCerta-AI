@@ -1,0 +1,4 @@
+interface:
+  display_name: "Desenvolvimento EntregaCerta"
+  short_description: "Mudanças pequenas, explicáveis e verificadas"
+  default_prompt: "Use $entregacerta-vibe-code para realizar a alteração solicitada no EntregaCerta AI e conferir o resultado."

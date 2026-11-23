@@ -92,6 +92,18 @@ Todos usam .\.venv\Scripts\python.exe main.py seguido da ação:
 
 ## Onde trabalhar
 
+As orientações para desenvolvimento com IA ficam em
+[.agents/skills/](.agents/skills/entregacerta-vibe-code/SKILL.md).
+São quatro skills: desenvolvimento geral, frontend, GenAI e backend/infraestrutura.
+Elas mantêm o contexto atual do projeto e indicam como implementar e conferir
+mudanças. Cada pasta contém um SKILL.md e metadados de identificação.
+
+Exemplo de pedido: **“Use $entregacerta-frontend para melhorar os filtros de
+Pedidos, preservando a intro e o ML, e confira o fluxo.”** Para outras tarefas,
+use $entregacerta-vibe-code, $entregacerta-genai ou $entregacerta-backend-infra.
+Se não aparecerem na lista do assistente, indique o caminho do SKILL.md
+correspondente no pedido.
+
 ```text
 main.py           Comandos para operar o projeto
 Dockerfile        Imagem da aplicação, com dependências de execução

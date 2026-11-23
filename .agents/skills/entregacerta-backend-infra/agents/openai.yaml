@@ -1,0 +1,4 @@
+interface:
+  display_name: "Backend e infra EntregaCerta"
+  short_description: "API, PostgreSQL, Docker e Terraform local"
+  default_prompt: "Use $entregacerta-backend-infra para realizar a alteração solicitada no EntregaCerta AI e conferir o resultado."

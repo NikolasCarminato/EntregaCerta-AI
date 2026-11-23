@@ -1,0 +1,4 @@
+interface:
+  display_name: "Frontend EntregaCerta"
+  short_description: "Visual, animações e fluxos reais da interface"
+  default_prompt: "Use $entregacerta-frontend para realizar a alteração solicitada no EntregaCerta AI e conferir o resultado."
