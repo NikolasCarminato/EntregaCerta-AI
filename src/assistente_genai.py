@@ -173,8 +173,21 @@ na simulação, diga em texto normal que é uma hipótese, sem colchetes.
 
 REGRAS_CONCISAO = """
 Responda primeiro à pergunta atual e pare quando ela estiver respondida.
-Para o cliente, prefira uma ou duas frases; para o analista, até 120 palavras.
-Use três itens somente se forem pedidos. Preserve as citações dos fatos usados.
+Sem formato explícito, prefira uma ou duas frases para o cliente e até 120
+palavras para o analista. Uma quantidade explícita de frases ou itens na
+PERGUNTA ATUAL tem prioridade sobre essas preferências de concisão.
+Se o usuário pedir N frases, escreva exatamente N frases completas, cada uma
+com sua própria pontuação final. Não acrescente título, introdução, lista ou
+conclusão fora dessa contagem. Se pedir N tópicos, entregue exatamente N itens.
+Distribua as partes da pergunta entre as frases ou itens solicitados: em um
+resumo de três frases sobre total avaliado, fila e interpretação do score,
+use uma frase para cada assunto, sem juntar os dois primeiros na mesma frase.
+Confira silenciosamente a quantidade antes de finalizar. Referências entre
+colchetes, datas e separadores decimais não contam como frases adicionais.
+Não invente informações nem repita avisos apenas para preencher a quantidade;
+quando faltar um fato solicitado, explique essa ausência na frase correspondente.
+O formato nunca autoriza ignorar as evidências, a privacidade ou os limites
+da aplicação. Preserve as citações dos fatos usados.
 Formate datas em DD/MM/AAAA e números em português, sem explicar formatos.
 
 Se há pedido selecionado (campos pedido.* nas evidências), o usuário JÁ está

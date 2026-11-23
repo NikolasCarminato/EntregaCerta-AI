@@ -1,4 +1,4 @@
-ENTREGACERTA AI — ROTEIRO V15
+ENTREGACERTA AI — ROTEIRO V16
 25 slides | Quatro pessoas | 19min40s + 20s de margem
 
 Foco: analista e revisão humana. Área do cliente secundária e em testes.
@@ -270,9 +270,13 @@ Transição incluída no tempo: Na sequência, mostramos os prompts usados no de
 
 SLIDE 23 — Vibe coding e prompt engineering
 Duração 01:00 | Relógio 17:40 a 18:40
-À esquerda está o prompt completo do frontend. À direita, ampliamos a orientação sobre integração com APIs e indisponibilidade. O documento explicita o comportamento esperado. Vamos relacionar essas instruções à experiência real da equipe.
-Indicação para a equipe: Usar cerca de 20 segundos nesta abertura. Reservar os 40 segundos restantes para um exemplo verdadeiro de solicitação, revisão e verificação feito pela equipe. As imagens são estáticas; o TXT completo está no link.
-18:00 a 18:40: reservar cerca de 60 a 70 palavras para um exemplo verdadeiro de solicitação, revisão e verificação feito pela equipe.
+À esquerda está o prompt completo do frontend; à direita, um trecho técnico sobre a validação da fila. Ele exige IDs únicos, scores entre zero e um e conferência das quantidades retornadas pela API.
+
+Também especifica o arredondamento da cota para cima em cada dia, em vez de aplicar 65% ao lote inteiro. Assim, ordenar a tabela não pode alterar quais pedidos foram selecionados pelo backend.
+
+Essas verificações estão no JavaScript do projeto. O exemplo mostra como o prompt transforma uma regra de negócio em requisitos verificáveis para o código. A IA auxilia a implementação; a equipe continua responsável por revisar e testar o resultado. E o score continua sendo risco relativo, não probabilidade calibrada.
+Indicação para a equipe: Apontar três partes: integridade dos IDs e scores; contagens e cota diária; preservação da seleção do backend. “Ceil” significa arredondar para cima. Não ler cada linha nem abrir o TXT durante este minuto. O trecho é literal; “prioridade1” significa prioridade igual a 1. A verificação correspondente está em frontend/script.js.
+Transição incluída no tempo: Na sequência, explicamos os cuidados com segurança e privacidade.
 
 ------------------------------------------------------------------------
 
@@ -308,7 +312,7 @@ Backup da demonstração
 Preparar vídeo de até 3 minutos com o mesmo fluxo do analista e um relatório local. Identificar o uso de gravação se for
 necessário. O roteiro não confirma que esse backup já existe.
 PowerPoint e prompt
-Extrair o pacote da V15 mantendo PPTX, roteiro, prompt_frontend.txt e exemplo_relatorio_genai_2026-11-13.pdf na
+Extrair o pacote da V16 mantendo PPTX, roteiro, prompt_frontend.txt e exemplo_relatorio_genai_2026-11-13.pdf na
 mesma pasta. Conferir os links dos slides 22 e 23 no modo Apresentação de Slides do PowerPoint de desktop. As imagens
 do prompt são estáticas.
 Se houver atraso no relógio
@@ -330,13 +334,13 @@ do CatBoost VER0.7.
 Teste reutilizado e cobertura limitada: resultados exploratórios. Mais dados e ajustes podem ajudar, mas o ganho deve ser
 confirmado em dados novos. Impacto e ROI não foram medidos.
 Referência do roteiro
-Apresentação EntregaCerta AI V15, 25 slides e notas dos apresentadores. As falas foram ajustadas ao tempo de cada slide. Este
+Apresentação EntregaCerta AI V16, 25 slides e notas dos apresentadores. As falas foram ajustadas ao tempo de cada slide. Este
 documento não substitui o ensaio oral.
 ENTREGACERTA AI
-Roteiro V15 / Ensaio
+Roteiro V16 / Ensaio
 25 slides / 19min40s de apresentação + 20s de margem
 14 / 14
 
 
-Referência: output/apresentacao/EntregaCerta_AI_apresentacao_v15.pptx.
-PDF correspondente: output/apresentacao/EntregaCerta_AI_roteiro_4_pessoas_v15.pdf.
+Referência: output/apresentacao/EntregaCerta_AI_apresentacao_v16.pptx.
+PDF correspondente: output/apresentacao/EntregaCerta_AI_roteiro_4_pessoas_v16.pdf.

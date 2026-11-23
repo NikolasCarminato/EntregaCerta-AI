@@ -13,9 +13,10 @@ pedidos ainda pendentes, arredondando para cima. Resultados e limitações no
 
 | Preciso de... | Onde abrir |
 |---|---|
-| Slides atuais (V15, 25 slides) | [PowerPoint](output/apresentacao/EntregaCerta_AI_apresentacao_v15.pptx) |
-| Falas das quatro pessoas e tempo por slide | [Roteiro PDF V15](output/apresentacao/EntregaCerta_AI_roteiro_4_pessoas_v15.pdf) · [TXT editável](Docs/roteiro_apresentacao.txt) |
-| Levar os materiais da apresentação | [Pacote completo V15](output/apresentacao/EntregaCerta_AI_v15_completo.zip) |
+| Slides atuais (V16, 25 slides) | [PowerPoint](output/apresentacao/EntregaCerta_AI_apresentacao_v16.pptx) |
+| Falas das quatro pessoas e tempo por slide | [Roteiro PDF V16](output/apresentacao/EntregaCerta_AI_roteiro_4_pessoas_v16.pdf) · [TXT editável](Docs/roteiro_apresentacao.txt) |
+| Fala individual da Pessoa 4 | [Roteiro PDF V16](output/apresentacao/EntregaCerta_AI_roteiro_pessoa_4_v16.pdf) |
+| Levar os materiais da apresentação | [Pacote completo V16](output/apresentacao/EntregaCerta_AI_v16_completo.zip) |
 | Instalar ou abrir a aplicação | [Guia de inicialização](Docs/instalacao_novo_pc.md) |
 | Preparar as respostas para a banca | [Perguntas e respostas](Docs/perguntas_respostas_banca.txt) |
 | Consultar apresentações e roteiros antigos | [Versões anteriores compactadas](output/versoes/entregaveis_anteriores_20261119.zip) |
@@ -111,7 +112,7 @@ Docs/             Guias, registro técnico, proveniência e roteiro editável
   evidencias/genai/  CSVs das avaliações e PDFs dos testes técnicos
   versoes/        Guias e código anteriores à integração CatBoost
 output/
-  apresentacao/   V15, roteiro atual, anexos e pacote para levar à banca
+  apresentacao/   V16, roteiro atual, anexos e pacote para levar à banca
   relatorios/     PDFs recentes exportados pela aplicação
   versoes/       Apresentações e roteiros anteriores em um único ZIP
 ```

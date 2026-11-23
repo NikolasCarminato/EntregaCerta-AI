@@ -2349,3 +2349,45 @@ GenAI real) e suas sessões foram removidas; os arquivos locais com as
 credenciais temporárias foram excluídos. O processo de falha simulada foi
 encerrado; a porta 8002 está fechada. A aplicação principal permaneceu
 disponível na porta 8001 (HTTP 200).
+
+### 2026-11-22 — Correção do formato das respostas da GenAI
+
+O chat havia respondido em duas frases ao pedido de três. Em
+`src/assistente_genai.py`, a quantidade explícita de frases ou tópicos passou
+a ter prioridade sobre a preferência por concisão. A orientação também pede
+conferência da contagem e preservação das evidências, sem preencher o formato
+com fatos inventados ou avisos repetidos. O prompt do resumo de PDF, as
+tentativas de API, o visual, a intro e o ML não foram alterados.
+
+Validação efetivamente executada:
+
+- Suíte `tests.test_evidencias_genai`, `tests.test_conversas_assistente`,
+  `tests.test_assistente_genai` e `tests.test_relatorio_pdf`: 59 testes
+  descobertos, 56 aprovados e três ignorados por dependerem de um esquema
+  PostgreSQL temporário. A execução no sandbox ficou travada; foi encerrada
+  após a suíte completar fora dele, sem falhas.
+- Oito chamadas reais com `gemini-3.5-flash-lite`: três repetições da pergunta
+  da demonstração, uma resposta de uma frase, quatro tópicos, uma pergunta
+  sobre economia financeira ausente, uma pergunta do cliente em três frases
+  e uma simulação da capacidade em duas frases. Todas respeitaram o formato,
+  terminaram com `STOP` na primeira tentativa e tiveram os fatos e as
+  referências revisados. Nenhuma conta de teste foi criada no banco.
+- Foram confirmados 18.603 pedidos avaliados, 990 na fila, 17.613 fora dela
+  e score como risco relativo. A hipótese de capacidade de 5% por dia
+  resultou em 101 pedidos, aplicando o arredondamento diário. Sobre economia,
+  a resposta reconheceu que a informação não havia sido fornecida.
+- A atualização por `infra/local/gerenciar.py iniciar` validou o Terraform e
+  substituiu somente o contêiner da aplicação. O ID e o horário de início do
+  PostgreSQL permaneceram iguais. Aplicação saudável; páginas públicas com
+  HTTP 200 e API de prioridades com HTTP 401 sem autenticação.
+- Uma nona chamada real, executada no contêiner atualizado pelo mesmo módulo
+  de conversa, confirmou três frases, 18.603/990 e referências E2/E3/E30.
+  O modelo solicitado e respondente foi `gemini-3.5-flash-lite`, com uma
+  tentativa e 3,303 s. O hash do módulo publicado coincidiu com o arquivo
+  local. Esta conferência final foi pelo módulo, sem nova interação de navegador.
+
+Respostas e tempos: [evidências dos testes de formato](evidencias/genai/avaliacao_genai_formato_2026-11-22.csv).
+Oito chamadas de desenvolvimento e uma no contêiner são uma amostra funcional;
+o ajuste de prompt não garante que toda resposta futura seguirá o formato.
+Os testes de PDF desta correção foram automatizados; não houve nova geração
+de PDF com a API real nesta rodada, pois seu prompt não foi modificado.
