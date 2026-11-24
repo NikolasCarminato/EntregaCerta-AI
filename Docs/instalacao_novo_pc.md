@@ -20,8 +20,8 @@ commit antes de continuar. Não descarte alterações de integrantes da equipe.
 Com o diretório de trabalho limpo, execute:
 
 ```powershell
-git switch rnn-train
-git pull --ff-only origin rnn-train
+git switch main
+git pull --ff-only origin main
 ```
 
 Se algum comando falhar ou o Git informar divergência entre as branches, pare
@@ -182,8 +182,8 @@ contêiner para permitir a aplicação posterior. Não cria um segundo banco.
 Use o **PowerShell na raiz do repositório**, a pasta que contém `main.py`.
 No VS Code: Terminal → Novo Terminal. Não execute os módulos de `src` isoladamente.
 
-**Neste computador, a carga CatBoost já está pronta.** Encerre o servidor antigo
-com Ctrl+C, abra o Docker Desktop e execute:
+**Se o banco CatBoost e a conta do analista já estiverem preparados**, encerre
+o servidor antigo com Ctrl+C, abra o Docker Desktop e execute:
 
 ```powershell
 .\.venv\Scripts\python.exe main.py iniciar
@@ -194,6 +194,17 @@ O dashboard exige login de analista; o backend também restringe esse acesso.
 A demonstração padrão agora é CatBoost D−1, com 18.603 pedidos históricos.
 
 ## Ordem para instalar do zero
+
+Primeiro obtenha a versão final. Com Git instalado, no PowerShell:
+
+```powershell
+git clone --branch main https://github.com/ProjetoBootcampTCS/EntregaCerta-AI.git
+cd EntregaCerta-AI
+```
+
+Se estiver usando um fork pessoal, substitua somente a URL pelo endereço do
+seu fork. A `main` é a referência atual; `rnn-train` permanece como histórico.
+As etapas abaixo não dependem de copiar `.env`, `.venv` ou volumes de outro PC.
 
 | Ordem | Ação | Resultado |
 |---|---|---|
@@ -215,8 +226,13 @@ fluxo anterior da MLP. Seus arquivos e instruções estão preservados no
 Instale Python 3.12, Git, VS Code e Docker Desktop. Se `.venv` ainda não existir:
 
 ```powershell
+py -3.12 --version
 py -3.12 -m venv .venv
 ```
+
+Se o primeiro comando informar que não encontrou o runtime, instale Python
+3.12 com o launcher do Windows antes de continuar. Não copie a `.venv` de
+outra pessoa: cada computador instala suas próprias dependências.
 
 Instale ou atualize as dependências, sem recriar um ambiente existente:
 
@@ -394,3 +410,34 @@ O código e a documentação anteriores à integração estão no ZIP
 comparar antes de restaurar. Esse ZIP não é backup do PostgreSQL, das senhas
 ou dos ambientes Python. Os pontos 0/1 anteriores continuam separados em
 `EntregaCertaAI_Pontos`, na pasta irmã do repositório.
+
+<a id="validacao-instalacao-limpa"></a>
+
+## Validação em instalação limpa — 24/11/2026
+
+A versão de código `65c1ee0` foi clonada diretamente do GitHub, sem copiar
+`.env`, `.venv` ou o banco da instalação da apresentação. Os ajustes de
+portfólio posteriores acrescentam documentação, licença e capturas; não
+alteram o código executado nem os artefatos do modelo.
+
+- Ambiente virtual novo com Python **3.12.14** e instalação de `requirements.txt`;
+  `pip check` sem conflitos. O interpretador 3.12 disponível foi chamado
+  diretamente, pois não estava cadastrado no launcher `py` desta máquina.
+- PostgreSQL **17** vazio em contêiner separado, na porta local **5544**, para
+  preservar o serviço existente em 5433. Foi usado `--sem-docker` nos comandos
+  Python porque esse contêiner temporário já estava iniciado.
+- `main.py preparar-catboost --sem-docker`: primeira carga de **30.778 entradas**.
+- `main.py verificar`: **18.603 pedidos** no lote e **990** na fila.
+- Conta de analista criada pelo CLI com entrada automatizada de senha; login,
+  dashboard e filtro de pedidos conferidos no Edge. Acesso anônimo à API da
+  fila recusado com HTTP **401**; nenhuma exceção de JavaScript nas telas visitadas.
+- Sem `GEMINI_API_KEY`, o assistente informou indisponibilidade e o PDF de
+  contingência foi gerado com HTTP **200**, duas páginas e os indicadores do lote.
+  A verificação não enviou dados ao provedor externo de GenAI.
+- A mesma suíte de `main.py testar --postgres`, executada no clone com log
+  persistente, concluiu **101 testes**, sem falhas, erros ou testes ignorados.
+
+Essa conferência cobre a instalação local por Python e PostgreSQL, com dados
+e modelos versionados. Não é uma nova avaliação preditiva, um treinamento
+de ML ou uma nova homologação de deploy em nuvem. As duas capturas do README
+vieram dessa execução com registros históricos e conta exclusiva de demonstração.
