@@ -1,5 +1,16 @@
 # Ambiente e segredos locais
 .venv/
+.venv-ctgan/
+.venv-ver07/
+# Artefatos volumosos do experimento; notebooks e código continuam versionados.
+Modelos/experimento_ctgan/
+Modelos/experimento_historicos/
+Modelos/experimento_simulacao/
+Modelos/comparacao_recall95/
+Modelos/experimento_operacional/
+Dados/simulacao_ctgan/
+Dados/pedidos_tratados_e_injetados.csv
+Dados/ctgan_sinteticos.csv
 .env
 .env.*
 !.env.example
@@ -16,14 +27,24 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .ipynb_checkpoints/
+.tmp*/
 *.egg-info/
 *.log
 
-# Estado e credenciais da infraestrutura futura
+# Estado, planos e executável local da infraestrutura
 .terraform/
+.terraform-local/
 *.tfstate
 *.tfstate.*
 *.tfplan
 *.tfvars
 *.tfvars.json
 !*.example.tfvars
+
+.chart-data-*/
+
+tmp/
+
+# Downloads dos datasets de enriquecimento
+/Dados/Datasets para Enriquecimento/*.zip
+/Dados/Datasets para Enriquecimento/dist_brasil.csv

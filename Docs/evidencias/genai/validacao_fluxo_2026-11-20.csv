@@ -1,0 +1,18 @@
+verificacao,ambiente,resultado,evidencia,limite
+Regressao automatizada,Python local e PostgreSQL,aprovado,101 testes em 377.444 segundos,Inclui testes tecnicos com mocks; nao comprova disponibilidade externa
+Acesso anonimo,HTTP local 8002,aprovado,Dashboard 303; APIs protegidas 401,Nenhum bypass de autenticacao
+Perfil cliente,HTTP local 8002,aprovado,Dashboard e fila e PDF negados com 403,Contas tecnicas temporarias
+Analista,HTTP local e navegador,aprovado,Login autorizado; logout invalida sessao,Nenhuma senha da equipe alterada
+CSRF e origem,HTTP local 8002,aprovado,Token incorreto e origem diferente retornam 403,Teste funcional local
+CatBoost,HTTP local Windows e Docker Linux,aprovado,18603 pedidos; 1486 pendentes; 990 priorizados,Demonstracao historica exploratoria; nao e nova avaliacao de ML
+Equivalencia Windows Linux,HTTP local 8001 e 8002,aprovado,Mesmos IDs e ordem; diferenca maxima de score 5.551115123125783e-17,Comparacao numerica com tolerancia 1e-10; hash textual nao e igual entre plataformas
+Filtros e detalhes,HTTP local e navegador,aprovado,Busca retorna 1 pedido e score 0.9180; fila global permanece 990,Ausencias identificadas como Nao informado
+Falha do provedor,SDK interceptado com HTTP 503,aprovado,Chat encerra apos 3 tentativas e informa indisponibilidade,Erro simulado exclusivamente no processo de teste
+Nova tentativa,HTTP local e navegador,aprovado,Botao recupera formulario e permite repetir sem duplicar a pergunta,Provedor permaneceu em falha controlada
+PDF sem GenAI,HTTP local e renderizacao,aprovado,2 paginas com indicadores graficos e resumo de contingencia identificado,Arquivo revisado visualmente; conteudo generativo nao foi inventado
+Download no navegador,Brave local 8002,parcial,Botao aciona dialogo Salvar e exibe aviso correto de contingencia,Gravacao pelo dialogo cancelada por limitacao da automacao; arquivo obtido e conferido via HTTP
+PDF e cache,HTTP local,aprovado,Repeticao do mesmo snapshot devolve mesmos bytes; fatos extras 422; snapshot inexistente 404,Indicadores calculados no servidor
+Publicacao,Terraform e Docker local,aprovado,HTML servido identico aos arquivos corrigidos; banco e volume preservados,Somente container da aplicacao substituido
+GenAI externa real,Google Gemini via aplicacao Docker 8001,aprovado,gemini-3.5-flash-lite respondeu em 1 tentativa; HTTP 200 em 7.297 s; STOP; evidencias E2 E3 E30 corretas,Envio agregado autorizado explicitamente pelo usuario; amostra funcional de 1 pergunta
+PDF com GenAI real,Google Gemini via aplicacao Docker 8001,aprovado,HTTP 200 em 3.547 s; X-Resumo-GenAI incluido; 2 paginas revisadas; SHA256 bf3c5a8169576fff4a50b4fe5ccffdf69962dfa97c2f0ecd591f1ff633a90023,Resumo conferido contra os indicadores; nao e garantia de respostas futuras
+Limpeza,PostgreSQL e sistema local,aprovado,2 contas tecnicas por rodada removidas com sessoes; arquivos de credenciais excluidos; porta 8002 fechada,Aplicacao principal disponivel na porta 8001 com HTTP 200

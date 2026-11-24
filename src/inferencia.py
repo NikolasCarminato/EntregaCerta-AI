@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 
 import joblib
 import numpy as np
@@ -10,6 +11,9 @@ from .tratar_dados_ml import limpar_atributos
 
 
 def prever_pedidos(pedidos, pacote, modelo):
+    if pacote.get('tipo') == 'catboost_ver07':
+        from .catboost_ver07 import prever
+        return prever(pedidos, pacote, modelo)
 
     atributos, _ = limpar_atributos(pedidos)
 
@@ -31,6 +35,9 @@ def prever_pedidos(pedidos, pacote, modelo):
 
 
 def priorizar_pedidos(previsoes, fracao):
+    if 'checkpoint_at' in previsoes:
+        from .catboost_ver07 import priorizar
+        return priorizar(previsoes, fracao)
     resultado = previsoes.copy().reset_index(drop=True)
 
     quantidade = int(len(resultado) * fracao)
@@ -43,7 +50,19 @@ def priorizar_pedidos(previsoes, fracao):
 
     return resultado
 
-def carregar_modelos():
+def tipo_modelo():
+    from dotenv import load_dotenv
+    load_dotenv(Path(__file__).resolve().parents[1] / '.env')
+    return os.getenv('ENTREGACERTA_MODELO', 'catboost_ver07')
+
+
+def carregar_modelos(tipo=None):
+    tipo = tipo or tipo_modelo()
+    if tipo == 'catboost_ver07':
+        from .catboost_ver07 import carregar
+        return carregar()
+    if tipo != 'mlp':
+        raise ValueError('ENTREGACERTA_MODELO deve ser catboost_ver07 ou mlp.')
     # Localiza a pasta Modelos a partir deste arquivo.
     pasta = Path(__file__).resolve().parents[1] / "Modelos"
 
@@ -78,10 +97,11 @@ if __name__ == "__main__":
     pacote, modelo = carregar_modelos()
 
     # Lê os pedidos reais preparados para a demonstração.
-    pedidos = pd.read_csv(
-        raiz / "Dados" / "pedidos_demo_validacao.csv",
-        dtype={"order_id": "string"}
-    )
+    if pacote.get('tipo') == 'catboost_ver07':
+        from .catboost_ver07 import consultar
+        pedidos = consultar(pacote)
+    else:
+        pedidos = pd.read_csv(raiz / "Dados" / "pedidos_demo_validacao.csv", dtype={"order_id": "string"})
 
     # Calcula os scores e seleciona a fila.
     previsoes = prever_pedidos(pedidos, pacote, modelo)
@@ -92,7 +112,9 @@ if __name__ == "__main__":
     )
 
     # Salva identificador, score e prioridade de cada pedido.
-    caminho_saida = raiz / "Dados" / "previsoes_demo_validacao.csv"
+    caminho_saida = (raiz / 'Modelos' / 'catboost_ver07' / 'previsoes_backend.csv'
+                     if pacote.get('tipo') == 'catboost_ver07'
+                     else raiz / "Dados" / "previsoes_demo_validacao.csv")
     resultado.to_csv(caminho_saida, index=False)
 
     print("Previsão e priorização executadas!")

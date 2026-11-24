@@ -1,0 +1,128 @@
+{
+  "rule": "top 65% of pending per day based only on a simple as-of attribute",
+  "selection_by": "validation F1 only",
+  "validation_selected": "days_after_shipping_limit",
+  "selected_test": {
+    "n": 18603,
+    "positives": 672,
+    "precision": 0.47474747474747475,
+    "recall": 0.6994047619047619,
+    "f1": 0.5655836341756919,
+    "tp": 470,
+    "fp": 520,
+    "fn": 202,
+    "tn": 17411,
+    "alerts": 990
+  },
+  "candidates": [
+    {
+      "heuristic": "order_age",
+      "validation": {
+        "n": 12175,
+        "positives": 674,
+        "precision": 0.6867647058823529,
+        "recall": 0.6928783382789317,
+        "f1": 0.689807976366322,
+        "tp": 467,
+        "fp": 213,
+        "fn": 207,
+        "tn": 11288,
+        "alerts": 680
+      },
+      "test_diagnostic": {
+        "n": 18603,
+        "positives": 672,
+        "precision": 0.5,
+        "recall": 0.7366071428571429,
+        "f1": 0.5956678700361011,
+        "tp": 495,
+        "fp": 495,
+        "fn": 177,
+        "tn": 17436,
+        "alerts": 990
+      }
+    },
+    {
+      "heuristic": "in_transit_age",
+      "validation": {
+        "n": 12175,
+        "positives": 674,
+        "precision": 0.6735294117647059,
+        "recall": 0.6795252225519288,
+        "f1": 0.6765140324963073,
+        "tp": 458,
+        "fp": 222,
+        "fn": 216,
+        "tn": 11279,
+        "alerts": 680
+      },
+      "test_diagnostic": {
+        "n": 18603,
+        "positives": 672,
+        "precision": 0.40606060606060607,
+        "recall": 0.5982142857142857,
+        "f1": 0.48375451263537905,
+        "tp": 402,
+        "fp": 588,
+        "fn": 270,
+        "tn": 17343,
+        "alerts": 990
+      }
+    },
+    {
+      "heuristic": "not_dispatched_then_age",
+      "validation": {
+        "n": 12175,
+        "positives": 674,
+        "precision": 0.6911764705882353,
+        "recall": 0.6973293768545994,
+        "f1": 0.6942392909896603,
+        "tp": 470,
+        "fp": 210,
+        "fn": 204,
+        "tn": 11291,
+        "alerts": 680
+      },
+      "test_diagnostic": {
+        "n": 18603,
+        "positives": 672,
+        "precision": 0.5575757575757576,
+        "recall": 0.8214285714285714,
+        "f1": 0.6642599277978339,
+        "tp": 552,
+        "fp": 438,
+        "fn": 120,
+        "tn": 17493,
+        "alerts": 990
+      }
+    },
+    {
+      "heuristic": "days_after_shipping_limit",
+      "validation": {
+        "n": 12175,
+        "positives": 674,
+        "precision": 0.6926470588235294,
+        "recall": 0.6988130563798219,
+        "f1": 0.6957163958641064,
+        "tp": 471,
+        "fp": 209,
+        "fn": 203,
+        "tn": 11292,
+        "alerts": 680
+      },
+      "test_diagnostic": {
+        "n": 18603,
+        "positives": 672,
+        "precision": 0.47474747474747475,
+        "recall": 0.6994047619047619,
+        "f1": 0.5655836341756919,
+        "tp": 470,
+        "fp": 520,
+        "fn": 202,
+        "tn": 17411,
+        "alerts": 990
+      }
+    }
+  ],
+  "test_is_reused": true
+}

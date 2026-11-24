@@ -1,0 +1,4 @@
+interface:
+  display_name: "GenAI EntregaCerta"
+  short_description: "Respostas fundamentadas, evidências e PDF"
+  default_prompt: "Use $entregacerta-genai para realizar a alteração solicitada no EntregaCerta AI e conferir o resultado."

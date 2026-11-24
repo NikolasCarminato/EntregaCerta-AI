@@ -1,0 +1,201 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" version="24.7.17" type="device">
+  <diagram id="arquitetura" name="Arquitetura | EntregaCerta AI">
+    <mxGraphModel dx="2400" dy="1500" grid="1" gridSize="10" page="1" pageScale="1" pageWidth="2400" pageHeight="1500" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="Arquitetura | EntregaCerta AI" style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;overflow=hidden;fontFamily=Arial;fontSize=34;fontColor=#19271f;fontStyle=1;spacing=0;" vertex="1" parent="1">
+          <mxGeometry x="50" y="32" width="2300" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" value="Estado implementado em 18/11/2026 • Aplicação local com FastAPI, frontend HTML/CSS/JS e PostgreSQL.&lt;br&gt;Treinamento separado da execução web. A previsão histórica e os pedidos da loja demonstrativa são fluxos distintos." style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;overflow=hidden;fontFamily=Arial;fontSize=18;fontColor=#50604f;fontStyle=0;spacing=0;" vertex="1" parent="1">
+          <mxGeometry x="50" y="88" width="2300" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="offline" value="" style="rounded=1;arcSize=3;fillColor=#f8faf7;strokeColor=#c7d5c5;" vertex="1" parent="1">
+          <mxGeometry x="35" y="165" width="485" height="1145" as="geometry" />
+        </mxCell>
+        <mxCell id="offline_title" value="PREPARAÇÃO / PESQUISA" style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;overflow=hidden;fontFamily=Arial;fontSize=24;fontColor=#365b43;fontStyle=1;spacing=0;" vertex="1" parent="1">
+          <mxGeometry x="57" y="182" width="441" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="fontes" value="&lt;b&gt;Fontes e pesquisa&lt;/b&gt;&lt;br&gt;&lt;br&gt;Olist real, anonimizado (2016–2018)&lt;br&gt;Fontes externas do pacote VER0.7&lt;br&gt;Notebook 03: Pandas, EDA, treino&lt;br&gt;Avaliação temporal exploratória" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=18;fillColor=#f0f5ed;strokeColor=#c7d5c5;fontFamily=Arial;fontColor=#19271f;fontSize=18;" vertex="1" parent="1">
+          <mxGeometry x="65" y="260" width="425" height="205" as="geometry" />
+        </mxCell>
+        <mxCell id="preparo" value="&lt;b&gt;Preparação verificada&lt;/b&gt;&lt;br&gt;&lt;br&gt;experimentos/preparar_ver07.py&lt;br&gt;Reconstrução das entradas D−1&lt;br&gt;Conferência de hashes e scores&lt;br&gt;Sem execução pelo navegador" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=18;fillColor=#f0f5ed;strokeColor=#c7d5c5;fontFamily=Arial;fontColor=#19271f;fontSize=18;" vertex="1" parent="1">
+          <mxGeometry x="65" y="550" width="425" height="205" as="geometry" />
+        </mxCell>
+        <mxCell id="artefatos" value="&lt;b&gt;Artefatos locais&lt;/b&gt;&lt;br&gt;&lt;br&gt;Modelos/catboost_ver07/&lt;br&gt;modelo.cbm + config.json&lt;br&gt;pedidos_d1.parquet&lt;br&gt;Auditoria e métricas: uso offline" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=18;fillColor=#f0f5ed;strokeColor=#c7d5c5;fontFamily=Arial;fontColor=#19271f;fontSize=18;" vertex="1" parent="1">
+          <mxGeometry x="65" y="840" width="425" height="205" as="geometry" />
+        </mxCell>
+        <mxCell id="o1" style="edgeStyle=segmentEdgeStyle;rounded=0;html=1;strokeColor=#365b43;strokeWidth=2;endArrow=block;dashed=0;exitX=0.4988235294117647;exitY=1.0;entryX=0.4988235294117647;entryY=0.0;exitPerimeter=0;entryPerimeter=0;" edge="1" parent="1" source="fontes" target="preparo">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="o2" style="edgeStyle=segmentEdgeStyle;rounded=0;html=1;strokeColor=#365b43;strokeWidth=2;endArrow=block;dashed=0;exitX=0.4988235294117647;exitY=1.0;entryX=0.4988235294117647;entryY=0.0;exitPerimeter=0;entryPerimeter=0;" edge="1" parent="1" source="preparo" target="artefatos">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="offline_note" value="Novos treinos são salvos à parte.&lt;br&gt;Não há promoção automática de modelo.&lt;br&gt;A loja lê o catálogo dos CSVs Olist;&lt;br&gt;não gera entradas D−1 operacionais." style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;overflow=hidden;fontFamily=Arial;fontSize=18;fontColor=#19271f;fontStyle=0;spacing=0;" vertex="1" parent="1">
+          <mxGeometry x="65" y="1130" width="420" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="runtime" value="" style="rounded=1;arcSize=3;fillColor=#f8faf7;strokeColor=#c7d5c5;" vertex="1" parent="1">
+          <mxGeometry x="560" y="165" width="1805" height="1145" as="geometry" />
+        </mxCell>
+        <mxCell id="runtime_title" value="EXECUÇÃO DO SISTEMA — NAVEGADOR, BACKEND, BANCO E SERVIÇO EXTERNO" style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;overflow=hidden;fontFamily=Arial;fontSize=24;fontColor=#365b43;fontStyle=1;spacing=0;" vertex="1" parent="1">
+          <mxGeometry x="582" y="182" width="1761" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="front" value="&lt;b&gt;Navegador · HTML / CSS / JS&lt;/b&gt;&lt;br&gt;&lt;br&gt;Início e intro&lt;br&gt;Analista: dashboard, pedidos e PDF&lt;br&gt;Cliente: catálogo, pedidos e rastreio demo&lt;br&gt;Assistente disponível após autenticação" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=18;fillColor=#f0f5ed;strokeColor=#c7d5c5;fontFamily=Arial;fontColor=#19271f;fontSize=18;" vertex="1" parent="1">
+          <mxGeometry x="600" y="260" width="640" height="210" as="geometry" />
+        </mxCell>
+        <mxCell id="api" value="&lt;b&gt;FastAPI · Docker local · src/api.py&lt;/b&gt;&lt;br&gt;&lt;br&gt;Rotas /api/* e páginas do frontend&lt;br&gt;Sessão, perfil, CSRF e autorização&lt;br&gt;Cliente acessa apenas seus pedidos&lt;br&gt;Dashboard e PDF exclusivos do analista" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=18;fillColor=#f0f5ed;strokeColor=#c7d5c5;fontFamily=Arial;fontColor=#19271f;fontSize=18;" vertex="1" parent="1">
+          <mxGeometry x="1470" y="260" width="820" height="210" as="geometry" />
+        </mxCell>
+        <mxCell id="http" style="edgeStyle=segmentEdgeStyle;rounded=0;html=1;strokeColor=#365b43;strokeWidth=2;endArrow=block;dashed=0;exitX=1.0;exitY=0.5;entryX=0.0;entryY=0.5;exitPerimeter=0;entryPerimeter=0;" edge="1" parent="1" source="front" target="api">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="http_label" value="HTTP local / JSON / PDF" style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;overflow=hidden;fontFamily=Arial;fontSize=17;fontColor=#365b43;fontStyle=0;spacing=0;" vertex="1" parent="1">
+          <mxGeometry x="1245" y="325" width="232.5" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="ml" value="&lt;b&gt;Inferência histórica&lt;/b&gt;&lt;br&gt;&lt;br&gt;inferencia.py / catboost_ver07.py&lt;br&gt;CatBoost: 111 atributos em D−1&lt;br&gt;Só pendentes elegíveis recebem score&lt;br&gt;Cota: ceil(65% × pendentes/dia)&lt;br&gt;Score não é probabilidade calibrada" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=18;fillColor=#f0f5ed;strokeColor=#c7d5c5;fontFamily=Arial;fontColor=#19271f;fontSize=18;" vertex="1" parent="1">
+          <mxGeometry x="600" y="610" width="420" height="235" as="geometry" />
+        </mxCell>
+        <mxCell id="loja" value="&lt;b&gt;Loja e operação&lt;/b&gt;&lt;br&gt;&lt;br&gt;loja_web.py / acesso_web.py&lt;br&gt;Catálogo de CSVs, pedidos no SQL&lt;br&gt;Prazo, responsável e eventos JSONB&lt;br&gt;Atualização com controle de versão&lt;br&gt;Sem pagamento, envio ou score real" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=18;fillColor=#f0f5ed;strokeColor=#c7d5c5;fontFamily=Arial;fontColor=#19271f;fontSize=18;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="610" width="420" height="235" as="geometry" />
+        </mxCell>
+        <mxCell id="genai" value="&lt;b&gt;Chat fundamentado&lt;/b&gt;&lt;br&gt;&lt;br&gt;assistente_genai.py / evidências&lt;br&gt;Contexto autorizado pelo backend&lt;br&gt;Memória curta por sessão e contexto&lt;br&gt;Referências e feedback do usuário&lt;br&gt;API indisponível: aviso explícito" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=18;fillColor=#f0f5ed;strokeColor=#c7d5c5;fontFamily=Arial;fontColor=#19271f;fontSize=18;" vertex="1" parent="1">
+          <mxGeometry x="1480" y="610" width="420" height="235" as="geometry" />
+        </mxCell>
+        <mxCell id="pdf" value="&lt;b&gt;Relatório do analista&lt;/b&gt;&lt;br&gt;&lt;br&gt;relatorio_pdf.py&lt;br&gt;Indicadores do snapshot&lt;br&gt;Gráficos via ReportLab&lt;br&gt;Resumo agregado via Gemini&lt;br&gt;Contingência sem GenAI" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=18;fillColor=#f0f5ed;strokeColor=#c7d5c5;fontFamily=Arial;fontColor=#19271f;fontSize=18;" vertex="1" parent="1">
+          <mxGeometry x="1920" y="610" width="400" height="235" as="geometry" />
+        </mxCell>
+        <mxCell id="api_0" style="edgeStyle=segmentEdgeStyle;rounded=0;html=1;strokeColor=#365b43;strokeWidth=2;endArrow=block;dashed=0;exitX=0.49390243902439024;exitY=1.0;entryX=0.5;entryY=0.0;exitPerimeter=0;entryPerimeter=0;" edge="1" parent="1" source="api" target="ml">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1875" y="535" />
+              <mxPoint x="810" y="535" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="api_1" style="edgeStyle=segmentEdgeStyle;rounded=0;html=1;strokeColor=#365b43;strokeWidth=2;endArrow=block;dashed=0;exitX=0.49390243902439024;exitY=1.0;entryX=0.5;entryY=0.0;exitPerimeter=0;entryPerimeter=0;" edge="1" parent="1" source="api" target="loja">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1875" y="535" />
+              <mxPoint x="1250" y="535" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="api_2" style="edgeStyle=segmentEdgeStyle;rounded=0;html=1;strokeColor=#365b43;strokeWidth=2;endArrow=block;dashed=0;exitX=0.49390243902439024;exitY=1.0;entryX=0.5;entryY=0.0;exitPerimeter=0;entryPerimeter=0;" edge="1" parent="1" source="api" target="genai">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1875" y="535" />
+              <mxPoint x="1690" y="535" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="api_3" style="edgeStyle=segmentEdgeStyle;rounded=0;html=1;strokeColor=#365b43;strokeWidth=2;endArrow=block;dashed=0;exitX=0.49390243902439024;exitY=1.0;entryX=0.5;entryY=0.0;exitPerimeter=0;entryPerimeter=0;" edge="1" parent="1" source="api" target="pdf">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1875" y="535" />
+              <mxPoint x="2120" y="535" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="db" value="&lt;b&gt;PostgreSQL 17 · Docker / Terraform&lt;/b&gt;&lt;br&gt;&lt;br&gt;modelo_ver07: atributos/contexto D−1 em JSONB; sem alvo/score&lt;br&gt;app_web: contas, sessões, pedidos demonstrativos e feedback&lt;br&gt;public: histórico/MLP anterior e avaliações originais separadas&lt;br&gt;Volume persistente • porta local 5433 → contêiner 5432" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=18;fillColor=#f0f5ed;strokeColor=#c7d5c5;fontFamily=Arial;fontColor=#19271f;fontSize=18;" vertex="1" parent="1">
+          <mxGeometry x="600" y="1010" width="980" height="210" as="geometry" />
+        </mxCell>
+        <mxCell id="ram" value="&lt;b&gt;Memória do processo&lt;/b&gt;&lt;br&gt;&lt;br&gt;Conversas: TTL de 30 min&lt;br&gt;Análises/PDFs: TTL de 30 min&lt;br&gt;Cache de modelo e de consultas&lt;br&gt;Não são tabelas PostgreSQL" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=18;fillColor=#f0f5ed;strokeColor=#c7d5c5;fontFamily=Arial;fontColor=#19271f;fontSize=18;" vertex="1" parent="1">
+          <mxGeometry x="1630" y="1010" width="350" height="210" as="geometry" />
+        </mxCell>
+        <mxCell id="gemini" value="&lt;b&gt;Google Gemini API&lt;/b&gt;&lt;br&gt;&lt;br&gt;Serviço externo via HTTPS&lt;br&gt;Modelo configurado em .env&lt;br&gt;Chat e resumo de PDF&lt;br&gt;Retentativas limitadas" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=18;fillColor=#f0f5ed;strokeColor=#c7d5c5;fontFamily=Arial;fontColor=#19271f;fontSize=18;" vertex="1" parent="1">
+          <mxGeometry x="2040" y="1010" width="280" height="210" as="geometry" />
+        </mxCell>
+        <mxCell id="read_db" style="edgeStyle=segmentEdgeStyle;rounded=0;html=1;strokeColor=#365b43;strokeWidth=2;endArrow=block;dashed=0;exitX=0.5;exitY=1.0;entryX=0.21428571428571427;entryY=0.0;exitPerimeter=0;entryPerimeter=0;" edge="1" parent="1" source="ml" target="db">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="read_db_label" value="leitura" style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;overflow=hidden;fontFamily=Arial;fontSize=17;fontColor=#365b43;fontStyle=0;spacing=0;" vertex="1" parent="1">
+          <mxGeometry x="830" y="920" width="80.5" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="write_db" style="edgeStyle=segmentEdgeStyle;rounded=0;html=1;strokeColor=#365b43;strokeWidth=2;endArrow=block;dashed=0;exitX=0.5;exitY=1.0;entryX=0.6632653061224489;entryY=0.0;exitPerimeter=0;entryPerimeter=0;" edge="1" parent="1" source="loja" target="db">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="write_db_label" value="leitura / escrita" style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;overflow=hidden;fontFamily=Arial;fontSize=17;fontColor=#365b43;fontStyle=0;spacing=0;" vertex="1" parent="1">
+          <mxGeometry x="1270" y="920" width="175.5" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="chat_mem" style="edgeStyle=segmentEdgeStyle;rounded=0;html=1;strokeColor=#365b43;strokeWidth=2;endArrow=block;dashed=0;exitX=0.5;exitY=1.0;entryX=0.4857142857142857;entryY=0.0;exitPerimeter=0;entryPerimeter=0;" edge="1" parent="1" source="genai" target="ram">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1690" y="930" />
+              <mxPoint x="1800" y="930" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="chat_mem_label" value="sessão" style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;overflow=hidden;fontFamily=Arial;fontSize=17;fontColor=#365b43;fontStyle=0;spacing=0;" vertex="1" parent="1">
+          <mxGeometry x="1700" y="950" width="80" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="pdf_mem" style="edgeStyle=segmentEdgeStyle;rounded=0;html=1;strokeColor=#365b43;strokeWidth=2;endArrow=block;dashed=0;exitX=0.225;exitY=1.0;entryX=0.7714285714285715;entryY=0.0;exitPerimeter=0;entryPerimeter=0;" edge="1" parent="1" source="pdf" target="ram">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2010" y="970" />
+              <mxPoint x="1900" y="970" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="external" style="edgeStyle=segmentEdgeStyle;rounded=0;html=1;strokeColor=#365b43;strokeWidth=2;endArrow=block;dashed=0;exitX=0.75;exitY=1.0;entryX=0.6428571428571429;entryY=0.0;exitPerimeter=0;entryPerimeter=0;" edge="1" parent="1" source="pdf" target="gemini">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="external_label" value="resumo" style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;overflow=hidden;fontFamily=Arial;fontSize=17;fontColor=#365b43;fontStyle=0;spacing=0;" vertex="1" parent="1">
+          <mxGeometry x="2230" y="920" width="80" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="external_chat" style="edgeStyle=segmentEdgeStyle;rounded=0;html=1;strokeColor=#365b43;strokeWidth=2;endArrow=block;dashed=0;exitX=0.9523809523809523;exitY=1.0;entryX=0.42857142857142855;entryY=0.0;exitPerimeter=0;entryPerimeter=0;" edge="1" parent="1" source="genai" target="gemini">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1880" y="895" />
+              <mxPoint x="2160" y="895" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="external_chat_label" value="chat" style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;overflow=hidden;fontFamily=Arial;fontSize=17;fontColor=#365b43;fontStyle=0;spacing=0;" vertex="1" parent="1">
+          <mxGeometry x="1930" y="868" width="80" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="weights" style="edgeStyle=segmentEdgeStyle;rounded=0;html=1;strokeColor=#365b43;strokeWidth=2;endArrow=block;dashed=0;exitX=1.0;exitY=0.43902439024390244;entryX=0.0;entryY=0.46808510638297873;exitPerimeter=0;entryPerimeter=0;" edge="1" parent="1" source="artefatos" target="ml">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="550" y="930" />
+              <mxPoint x="550" y="720" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="weights_label" value=".cbm" style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;overflow=hidden;fontFamily=Arial;fontSize=17;fontColor=#365b43;fontStyle=0;spacing=0;" vertex="1" parent="1">
+          <mxGeometry x="510" y="758" width="80" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="load_db" style="edgeStyle=segmentEdgeStyle;rounded=0;html=1;strokeColor=#365b43;strokeWidth=2;endArrow=block;dashed=1;exitX=1.0;exitY=0.7560975609756098;entryX=0.4489795918367347;entryY=1.0;exitPerimeter=0;entryPerimeter=0;" edge="1" parent="1" source="artefatos" target="db">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="535" y="995" />
+              <mxPoint x="535" y="1245" />
+              <mxPoint x="1040" y="1245" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="load_db_label" value="main.py preparar-catboost · carga verificada do Parquet" style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;overflow=hidden;fontFamily=Arial;fontSize=17;fontColor=#365b43;fontStyle=0;spacing=0;" vertex="1" parent="1">
+          <mxGeometry x="620" y="1260" width="536.5" height="25" as="geometry" />
+        </mxCell>
+        <mxCell id="feedback_note" value="Chat: contexto de fila/pedido e feedback passam pelos módulos do backend.&lt;br&gt;Catálogo e rastreio demonstrativos não chamam transportadoras reais." style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;overflow=hidden;fontFamily=Arial;fontSize=17;fontColor=#50604f;fontStyle=0;spacing=0;" vertex="1" parent="1">
+          <mxGeometry x="610" y="867" width="830" height="65" as="geometry" />
+        </mxCell>
+        <mxCell id="arch_footer" value="Docker + Terraform: aplicação em localhost:8001, 1 worker; PostgreSQL e volume existentes importados e protegidos. .env montado somente para leitura.&lt;br&gt;Somente prompts e contexto autorizado seguem para o Gemini; o PDF envia indicadores agregados. GenAI não altera pedidos nem o modelo.&lt;br&gt;GenAI indisponível: consultas, ML e PDF de contingência continuam funcionando. Modo Python: porta 8000. Sem nuvem ou rastreamento real integrado." style="text;html=1;align=left;verticalAlign=top;whiteSpace=wrap;overflow=hidden;fontFamily=Arial;fontSize=20;fontColor=#19271f;fontStyle=0;spacing=0;" vertex="1" parent="1">
+          <mxGeometry x="55" y="1350" width="2280" height="110" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

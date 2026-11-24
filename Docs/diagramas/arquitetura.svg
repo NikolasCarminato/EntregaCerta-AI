@@ -1,0 +1,162 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="1500" viewBox="0 0 2400 1500">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L10,4 L0,8 Z" fill="#365b43" />
+    </marker>
+  </defs>
+  <rect width="2400" height="1500" fill="white" />
+  <text x="50" y="66" fill="#19271f" font-family="Arial, sans-serif" font-size="34" font-weight="700">
+    <tspan x="50" dy="0">Arquitetura | EntregaCerta AI</tspan>
+  </text>
+  <text x="50" y="106" fill="#50604f" font-family="Arial, sans-serif" font-size="18" font-weight="400">
+    <tspan x="50" dy="0">Estado implementado em 18/11/2026 • Aplicação local com FastAPI, frontend HTML/CSS/JS e PostgreSQL.</tspan>
+    <tspan x="50" dy="24.839999999999996">Treinamento separado da execução web. A previsão histórica e os pedidos da loja demonstrativa são fluxos distintos.</tspan>
+  </text>
+  <rect x="35" y="165" width="485" height="1145" rx="15" fill="#f8faf7" stroke="#c7d5c5" />
+  <text x="57" y="206" fill="#365b43" font-family="Arial, sans-serif" font-size="24" font-weight="700">
+    <tspan x="57" dy="0">PREPARAÇÃO / PESQUISA</tspan>
+  </text>
+  <rect x="65" y="260" width="425" height="205" rx="10" fill="#f0f5ed" stroke="#c7d5c5" stroke-width="1.5" />
+  <text x="83" y="299" fill="#19271f" font-family="Arial, sans-serif" font-size="21" font-weight="700">Fontes e pesquisa</text>
+  <text x="83" y="336" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">Olist real, anonimizado (2016–2018)</text>
+  <text x="83" y="361" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">Fontes externas do pacote VER0.7</text>
+  <text x="83" y="386" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">Notebook 03: Pandas, EDA, treino</text>
+  <text x="83" y="411" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">Avaliação temporal exploratória</text>
+  <rect x="65" y="550" width="425" height="205" rx="10" fill="#f0f5ed" stroke="#c7d5c5" stroke-width="1.5" />
+  <text x="83" y="589" fill="#19271f" font-family="Arial, sans-serif" font-size="21" font-weight="700">Preparação verificada</text>
+  <text x="83" y="626" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">experimentos/preparar_ver07.py</text>
+  <text x="83" y="651" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">Reconstrução das entradas D−1</text>
+  <text x="83" y="676" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">Conferência de hashes e scores</text>
+  <text x="83" y="701" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">Sem execução pelo navegador</text>
+  <rect x="65" y="840" width="425" height="205" rx="10" fill="#f0f5ed" stroke="#c7d5c5" stroke-width="1.5" />
+  <text x="83" y="879" fill="#19271f" font-family="Arial, sans-serif" font-size="21" font-weight="700">Artefatos locais</text>
+  <text x="83" y="916" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">Modelos/catboost_ver07/</text>
+  <text x="83" y="941" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">modelo.cbm + config.json</text>
+  <text x="83" y="966" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">pedidos_d1.parquet</text>
+  <text x="83" y="991" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">Auditoria e métricas: uso offline</text>
+  <polyline points="277,465 277,550" fill="none" stroke="#365b43" stroke-width="2" marker-end="url(#arrow)" />
+  <polyline points="277,755 277,840" fill="none" stroke="#365b43" stroke-width="2" marker-end="url(#arrow)" />
+  <text x="65" y="1148" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">
+    <tspan x="65" dy="0">Novos treinos são salvos à parte.</tspan>
+    <tspan x="65" dy="24.839999999999996">Não há promoção automática de modelo.</tspan>
+    <tspan x="65" dy="24.839999999999996">A loja lê o catálogo dos CSVs Olist;</tspan>
+    <tspan x="65" dy="24.839999999999996">não gera entradas D−1 operacionais.</tspan>
+  </text>
+  <rect x="560" y="165" width="1805" height="1145" rx="15" fill="#f8faf7" stroke="#c7d5c5" />
+  <text x="582" y="206" fill="#365b43" font-family="Arial, sans-serif" font-size="24" font-weight="700">
+    <tspan x="582" dy="0">EXECUÇÃO DO SISTEMA — NAVEGADOR, BACKEND, BANCO E SERVIÇO EXTERNO</tspan>
+  </text>
+  <rect x="600" y="260" width="640" height="210" rx="10" fill="#f0f5ed" stroke="#c7d5c5" stroke-width="1.5" />
+  <text x="618" y="299" fill="#19271f" font-family="Arial, sans-serif" font-size="21" font-weight="700">Navegador · HTML / CSS / JS</text>
+  <text x="618" y="336" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">Início e intro</text>
+  <text x="618" y="361" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">Analista: dashboard, pedidos e PDF</text>
+  <text x="618" y="386" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">Cliente: catálogo, pedidos e rastreio demo</text>
+  <text x="618" y="411" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">Assistente disponível após autenticação</text>
+  <rect x="1470" y="260" width="820" height="210" rx="10" fill="#f0f5ed" stroke="#c7d5c5" stroke-width="1.5" />
+  <text x="1488" y="299" fill="#19271f" font-family="Arial, sans-serif" font-size="21" font-weight="700">FastAPI · Docker local · src/api.py</text>
+  <text x="1488" y="336" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">Rotas /api/* e páginas do frontend</text>
+  <text x="1488" y="361" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">Sessão, perfil, CSRF e autorização</text>
+  <text x="1488" y="386" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">Cliente acessa apenas seus pedidos</text>
+  <text x="1488" y="411" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">Dashboard e PDF exclusivos do analista</text>
+  <polyline points="1240,365 1470,365" fill="none" stroke="#365b43" stroke-width="2" marker-end="url(#arrow)" />
+  <rect x="1240" y="323" width="232.5" height="25" fill="white" rx="4" />
+  <text x="1245" y="342" fill="#365b43" font-family="Arial, sans-serif" font-size="17" font-weight="400">
+    <tspan x="1245" dy="0">HTTP local / JSON / PDF</tspan>
+  </text>
+  <rect x="600" y="610" width="420" height="235" rx="10" fill="#f0f5ed" stroke="#c7d5c5" stroke-width="1.5" />
+  <text x="618" y="649" fill="#19271f" font-family="Arial, sans-serif" font-size="21" font-weight="700">Inferência histórica</text>
+  <text x="618" y="686" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">inferencia.py / catboost_ver07.py</text>
+  <text x="618" y="711" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">CatBoost: 111 atributos em D−1</text>
+  <text x="618" y="736" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">Só pendentes elegíveis recebem score</text>
+  <text x="618" y="761" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">Cota: ceil(65% × pendentes/dia)</text>
+  <text x="618" y="786" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">Score não é probabilidade calibrada</text>
+  <rect x="1040" y="610" width="420" height="235" rx="10" fill="#f0f5ed" stroke="#c7d5c5" stroke-width="1.5" />
+  <text x="1058" y="649" fill="#19271f" font-family="Arial, sans-serif" font-size="21" font-weight="700">Loja e operação</text>
+  <text x="1058" y="686" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">loja_web.py / acesso_web.py</text>
+  <text x="1058" y="711" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">Catálogo de CSVs, pedidos no SQL</text>
+  <text x="1058" y="736" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">Prazo, responsável e eventos JSONB</text>
+  <text x="1058" y="761" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">Atualização com controle de versão</text>
+  <text x="1058" y="786" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">Sem pagamento, envio ou score real</text>
+  <rect x="1480" y="610" width="420" height="235" rx="10" fill="#f0f5ed" stroke="#c7d5c5" stroke-width="1.5" />
+  <text x="1498" y="649" fill="#19271f" font-family="Arial, sans-serif" font-size="21" font-weight="700">Chat fundamentado</text>
+  <text x="1498" y="686" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">assistente_genai.py / evidências</text>
+  <text x="1498" y="711" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">Contexto autorizado pelo backend</text>
+  <text x="1498" y="736" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">Memória curta por sessão e contexto</text>
+  <text x="1498" y="761" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">Referências e feedback do usuário</text>
+  <text x="1498" y="786" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">API indisponível: aviso explícito</text>
+  <rect x="1920" y="610" width="400" height="235" rx="10" fill="#f0f5ed" stroke="#c7d5c5" stroke-width="1.5" />
+  <text x="1938" y="649" fill="#19271f" font-family="Arial, sans-serif" font-size="21" font-weight="700">Relatório do analista</text>
+  <text x="1938" y="686" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">relatorio_pdf.py</text>
+  <text x="1938" y="711" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">Indicadores do snapshot</text>
+  <text x="1938" y="736" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">Gráficos via ReportLab</text>
+  <text x="1938" y="761" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">Resumo agregado via Gemini</text>
+  <text x="1938" y="786" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">Contingência sem GenAI</text>
+  <polyline points="1875,470 1875,535 810,535 810,610" fill="none" stroke="#365b43" stroke-width="2" marker-end="url(#arrow)" />
+  <polyline points="1875,470 1875,535 1250,535 1250,610" fill="none" stroke="#365b43" stroke-width="2" marker-end="url(#arrow)" />
+  <polyline points="1875,470 1875,535 1690,535 1690,610" fill="none" stroke="#365b43" stroke-width="2" marker-end="url(#arrow)" />
+  <polyline points="1875,470 1875,535 2120,535 2120,610" fill="none" stroke="#365b43" stroke-width="2" marker-end="url(#arrow)" />
+  <rect x="600" y="1010" width="980" height="210" rx="10" fill="#f0f5ed" stroke="#c7d5c5" stroke-width="1.5" />
+  <text x="618" y="1049" fill="#19271f" font-family="Arial, sans-serif" font-size="21" font-weight="700">PostgreSQL 17 · Docker / Terraform</text>
+  <text x="618" y="1086" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">modelo_ver07: atributos/contexto D−1 em JSONB; sem alvo/score</text>
+  <text x="618" y="1111" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">app_web: contas, sessões, pedidos demonstrativos e feedback</text>
+  <text x="618" y="1136" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">public: histórico/MLP anterior e avaliações originais separadas</text>
+  <text x="618" y="1161" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">Volume persistente • porta local 5433 → contêiner 5432</text>
+  <rect x="1630" y="1010" width="350" height="210" rx="10" fill="#f0f5ed" stroke="#c7d5c5" stroke-width="1.5" />
+  <text x="1648" y="1049" fill="#19271f" font-family="Arial, sans-serif" font-size="21" font-weight="700">Memória do processo</text>
+  <text x="1648" y="1086" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">Conversas: TTL de 30 min</text>
+  <text x="1648" y="1111" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">Análises/PDFs: TTL de 30 min</text>
+  <text x="1648" y="1136" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">Cache de modelo e de consultas</text>
+  <text x="1648" y="1161" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">Não são tabelas PostgreSQL</text>
+  <rect x="2040" y="1010" width="280" height="210" rx="10" fill="#f0f5ed" stroke="#c7d5c5" stroke-width="1.5" />
+  <text x="2058" y="1049" fill="#19271f" font-family="Arial, sans-serif" font-size="21" font-weight="700">Google Gemini API</text>
+  <text x="2058" y="1086" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">Serviço externo via HTTPS</text>
+  <text x="2058" y="1111" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">Modelo configurado em .env</text>
+  <text x="2058" y="1136" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">Chat e resumo de PDF</text>
+  <text x="2058" y="1161" fill="#19271f" font-family="Arial, sans-serif" font-size="18" font-weight="400">Retentativas limitadas</text>
+  <polyline points="810,845 810,1010" fill="none" stroke="#365b43" stroke-width="2" marker-end="url(#arrow)" />
+  <rect x="825" y="918" width="80.5" height="25" fill="white" rx="4" />
+  <text x="830" y="937" fill="#365b43" font-family="Arial, sans-serif" font-size="17" font-weight="400">
+    <tspan x="830" dy="0">leitura</tspan>
+  </text>
+  <polyline points="1250,845 1250,1010" fill="none" stroke="#365b43" stroke-width="2" marker-end="url(#arrow)" />
+  <rect x="1265" y="918" width="175.5" height="25" fill="white" rx="4" />
+  <text x="1270" y="937" fill="#365b43" font-family="Arial, sans-serif" font-size="17" font-weight="400">
+    <tspan x="1270" dy="0">leitura / escrita</tspan>
+  </text>
+  <polyline points="1690,845 1690,930 1800,930 1800,1010" fill="none" stroke="#365b43" stroke-width="2" marker-end="url(#arrow)" />
+  <rect x="1695" y="948" width="80" height="25" fill="white" rx="4" />
+  <text x="1700" y="967" fill="#365b43" font-family="Arial, sans-serif" font-size="17" font-weight="400">
+    <tspan x="1700" dy="0">sessão</tspan>
+  </text>
+  <polyline points="2010,845 2010,970 1900,970 1900,1010" fill="none" stroke="#365b43" stroke-width="2" marker-end="url(#arrow)" />
+  <polyline points="2220,845 2220,1010" fill="none" stroke="#365b43" stroke-width="2" marker-end="url(#arrow)" />
+  <rect x="2225" y="918" width="80" height="25" fill="white" rx="4" />
+  <text x="2230" y="937" fill="#365b43" font-family="Arial, sans-serif" font-size="17" font-weight="400">
+    <tspan x="2230" dy="0">resumo</tspan>
+  </text>
+  <polyline points="1880,845 1880,895 2160,895 2160,1010" fill="none" stroke="#365b43" stroke-width="2" marker-end="url(#arrow)" />
+  <rect x="1925" y="866" width="80" height="25" fill="white" rx="4" />
+  <text x="1930" y="885" fill="#365b43" font-family="Arial, sans-serif" font-size="17" font-weight="400">
+    <tspan x="1930" dy="0">chat</tspan>
+  </text>
+  <polyline points="490,930 550,930 550,720 600,720" fill="none" stroke="#365b43" stroke-width="2" marker-end="url(#arrow)" />
+  <rect x="505" y="756" width="80" height="25" fill="white" rx="4" />
+  <text x="510" y="775" fill="#365b43" font-family="Arial, sans-serif" font-size="17" font-weight="400">
+    <tspan x="510" dy="0">.cbm</tspan>
+  </text>
+  <polyline points="490,995 535,995 535,1245 1040,1245 1040,1220" fill="none" stroke="#365b43" stroke-width="2" marker-end="url(#arrow)" stroke-dasharray="8 5" />
+  <rect x="615" y="1258" width="536.5" height="25" fill="white" rx="4" />
+  <text x="620" y="1277" fill="#365b43" font-family="Arial, sans-serif" font-size="17" font-weight="400">
+    <tspan x="620" dy="0">main.py preparar-catboost · carga verificada do Parquet</tspan>
+  </text>
+  <text x="610" y="884" fill="#50604f" font-family="Arial, sans-serif" font-size="17" font-weight="400">
+    <tspan x="610" dy="0">Chat: contexto de fila/pedido e feedback passam pelos módulos do backend.</tspan>
+    <tspan x="610" dy="23.459999999999997">Catálogo e rastreio demonstrativos não chamam transportadoras reais.</tspan>
+  </text>
+  <text x="55" y="1370" fill="#19271f" font-family="Arial, sans-serif" font-size="20" font-weight="400">
+    <tspan x="55" dy="0">Docker + Terraform: aplicação em localhost:8001, 1 worker; PostgreSQL e volume existentes importados e protegidos. .env montado somente para leitura.</tspan>
+    <tspan x="55" dy="27.599999999999998">Somente prompts e contexto autorizado seguem para o Gemini; o PDF envia indicadores agregados. GenAI não altera pedidos nem o modelo.</tspan>
+    <tspan x="55" dy="27.599999999999998">GenAI indisponível: consultas, ML e PDF de contingência continuam funcionando. Modo Python: porta 8000. Sem nuvem ou rastreamento real integrado.</tspan>
+  </text>
+</svg>

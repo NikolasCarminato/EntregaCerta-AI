@@ -1,0 +1,127 @@
+{
+  "version": "VER0.7",
+  "created_utc": "2026-11-17T14:25:42.705309+00:00",
+  "original_sha256": {
+    "logistic-brazilian-dataset.zip": "967e41e04fc306fe604e2a693f488995a8b41e5047418f8a5c8e4abd6deca784",
+    "2016.zip": "62a88787f1d976d7898dba2acbf5874f79cd486816e6d9531c53966557eb20a6",
+    "2017.zip": "0f620edffe32a9df55e2c0619f5f9d2fe9965ffe2fa03bfa48abac4a4a34c061",
+    "2018.zip": "ca44308b336e72d830ab1daedef45a59debc2f52bfda1a8be02c1e3d948861bb",
+    "dist_brasil.zip": "cc5b8bd29b95d35472db91c9792a7a7220a6a6acc44f6046ec84a7a0c1c78819",
+    "archive.zip": "d476efe8d16ab267ce10535859ed3dd2d6e186bbb50c9d405a1e7bc05c200171"
+  },
+  "saved_model_verified": {
+    "saved_model_reproduced": true,
+    "max_probability_abs_diff": 1.1102230246251565e-16,
+    "policy_reproduced": true,
+    "original_olist_sha256_unchanged": true,
+    "n_prediction_rows": 18603,
+    "n_model_scored_pending": 1486,
+    "feature_count": 111
+  },
+  "test_reused": true,
+  "policy_post_hoc": true,
+  "sources_integrated": [
+    "Olist",
+    "INMET 2016-2018 processed daily UF",
+    "Zenodo road 2024 partial codes",
+    "Olist closed deals",
+    "Olist MQL ablation",
+    "calendar/holidays"
+  ],
+  "source_coverage": {
+    "marketing": {
+      "rows_in_source": 842,
+      "covered_orders_with_prior_win": 4409,
+      "covered_pct": 4.570332745931378
+    },
+    "roads": {
+      "road_file_rows_examined": 15481830,
+      "unique_requested_pairs": 3427,
+      "matched_orders": 15145,
+      "matched_pct": 15.699181092567638,
+      "network_date": "May 2024 - not historically faithful to 2016-2018",
+      "unique_municipios": 83,
+      "ambiguous_city_state_keys": 0,
+      "seller_code_coverage_pct": 70.3016481807816,
+      "customer_code_coverage_pct": 58.53011298849383
+    },
+    "weather": {
+      "weather_rows": 29592,
+      "weather_publication_delay": "explicit available_at, else date + 7d",
+      "spatial_resolution": "state proxy, not actual location",
+      "seller_weather_coverage_pct": 100.0,
+      "customer_weather_coverage_pct": 99.99274385819426
+    },
+    "mql": {
+      "covered_with_prior_win_and_mql": 4408,
+      "origin_nonmissing": 4397
+    }
+  },
+  "models_selected_validation": {
+    "D-2": {
+      "model": "LGBM07",
+      "policy": "F1_recall70",
+      "val": {
+        "n": 12170,
+        "positives": 669,
+        "precision": 0.6007497656982193,
+        "recall": 0.9581464872944694,
+        "f1": 0.738479262672811,
+        "tp": 641,
+        "fp": 426,
+        "fn": 28,
+        "tn": 11075,
+        "alerts": 1067
+      },
+      "params": {
+        "n_estimators": 400,
+        "learning_rate": 0.03,
+        "num_leaves": 13,
+        "min_child_samples": 40,
+        "reg_lambda": 12.0,
+        "colsample_bytree": 0.85,
+        "subsample": 0.85,
+        "subsample_freq": 1
+      }
+    },
+    "D-1": {
+      "model": "CB06",
+      "policy": "F1_recall70",
+      "val": {
+        "n": 12175,
+        "positives": 674,
+        "precision": 0.6693386773547094,
+        "recall": 0.9910979228486647,
+        "f1": 0.7990430622009569,
+        "tp": 668,
+        "fp": 330,
+        "fn": 6,
+        "tn": 11171,
+        "alerts": 998
+      },
+      "params": {
+        "iterations": 290,
+        "depth": 6,
+        "learning_rate": 0.01954,
+        "l2_leaf_reg": 10.878,
+        "auto_class_weights": "SqrtBalanced",
+        "random_strength": 1.0,
+        "rsm": 0.85
+      }
+    }
+  },
+  "pilot_selected_by_validation": "CB07_closed_only",
+  "pilot_metrics_test": {
+    "n": 18603,
+    "positives": 672,
+    "precision": 0.5585858585858586,
+    "recall": 0.8229166666666666,
+    "f1": 0.6654632972322503,
+    "tp": 553,
+    "fp": 437,
+    "fn": 119,
+    "tn": 17494,
+    "alerts": 990,
+    "pr_auc_pending_only": 0.7303459897804897
+  }
+}

@@ -1,0 +1,21 @@
+# Ambiente de execução Linux; não altera o ambiente de pesquisa do projeto.
+# Versões diretas iguais às verificadas localmente em 18/11/2026.
+pandas==3.1.0
+numpy==2.5.4
+scipy==1.18.1
+scikit-learn==1.9.1
+joblib==1.6.0
+catboost==1.2.10
+pyarrow==26.0.1
+matplotlib==3.11.2
+plotly==6.9.0
+psycopg[binary]==3.3.8
+fastapi==0.162.2
+uvicorn==0.54.0
+python-dotenv==1.2.4
+tzdata==2026.6
+httpx==0.28.1
+httpx2==2.16.0
+google-genai==3.0.0
+reportlab==4.5.1
+pypdf==6.21.4

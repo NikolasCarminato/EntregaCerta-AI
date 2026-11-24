@@ -1,0 +1,58 @@
+ENTREGACERTA AI - DATASETS PARA ENRIQUECIMENTO
+Referências conferidas em 22/11/2026.
+
+1. MARKETING FUNNEL BY OLIST
+Arquivo nesta pasta: archive.zip
+Fonte: Olist / Kaggle.
+Descrição: registros comerciais de leads e negócios fechados com vendedores.
+Permitem acrescentar características comerciais aos pedidos por seller_id.
+Contém olist_closed_deals_dataset.csv e
+olist_marketing_qualified_leads_dataset.csv.
+Página e download: https://www.kaggle.com/datasets/olistbr/marketing-funnel-olist
+Licença indicada pela fonte: CC BY-NC-SA 4.0.
+
+2. DADOS METEOROLÓGICOS DO INMET - 2016
+Arquivo nesta pasta: 2016.zip
+Descrição: observações meteorológicas horárias das estações automáticas em
+2016, incluindo chuva e temperatura, para construir atributos climáticos.
+Download: https://portal.inmet.gov.br/uploads/dadoshistoricos/2016.zip
+
+3. DADOS METEOROLÓGICOS DO INMET - 2017
+Arquivo nesta pasta: 2017.zip
+Descrição: mesma fonte e estrutura meteorológica, referentes ao ano de 2017.
+Download: https://portal.inmet.gov.br/uploads/dadoshistoricos/2017.zip
+
+4. DADOS METEOROLÓGICOS DO INMET - 2018
+Arquivo nesta pasta: 2018.zip
+Descrição: mesma fonte e estrutura meteorológica, referentes ao ano de 2018.
+Download: https://portal.inmet.gov.br/uploads/dadoshistoricos/2018.zip
+
+Fonte e catálogo dos três anos: Instituto Nacional de Meteorologia (INMET).
+Página oficial: https://portal.inmet.gov.br/dadoshistoricos/
+Os ZIPs são dados brutos por estação. O weather_daily.csv usado no piloto é
+uma base preparada separadamente, agregada por dia e UF; não é um arquivo
+distribuído diretamente nesses ZIPs. Clima por UF é uma aproximação espacial.
+
+5. MATRIZ DE DISTÂNCIAS RODOVIÁRIAS ENTRE MUNICÍPIOS BRASILEIROS
+Arquivo nesta pasta: dist_brasil.zip (contém dist_brasil.csv).
+Título original: Road distances and trip duration matrix for Brazilian municipalities.
+Autor: Raphael Saldanha. Repositório: Zenodo. Versão: 31/05/2024.
+Descrição: distâncias rodoviárias e durações estimadas de viagem entre pares
+de municípios identificados pelos códigos IBGE. Campos: orig, dest, dist
+(metros) e dur (minutos). Usa a rede do OSRM de maio de 2024; são estimativas
+de rotas, não tempos observados de entregas. Sua aplicação a pedidos Olist
+de 2016-2018 tem essa limitação temporal.
+Página da versão: https://zenodo.org/records/11400243
+DOI da versão: https://doi.org/10.5281/zenodo.11400243
+Download: https://zenodo.org/api/records/11400243/files/dist_brasil.zip/content
+Metodologia: https://rfsaldanha.github.io/data-projects/brazil_road_distances.html
+Licença indicada pela fonte: CC BY 4.0.
+O ZIP local corresponde ao checksum MD5 publicado:
+94208ec0638f028cede27ee03e602918.
+
+COMO REPOR OS ARQUIVOS
+Baixar pelas fontes acima e manter os nomes indicados nesta pasta.
+O archive.zip é o download do Marketing Funnel; não confundir com o ZIP da
+base principal Brazilian E-Commerce da Olist.
+O dist_brasil.csv já extraído é o mesmo dataset rodoviário, não outra fonte.
+Consultar as condições de uso de cada publicador e preservar sua atribuição.

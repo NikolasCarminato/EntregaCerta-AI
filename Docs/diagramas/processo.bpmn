@@ -1,0 +1,660 @@
+<?xml version='1.0' encoding='utf-8'?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_EntregaCerta" targetNamespace="https://entregacerta.local/process" exporter="EntregaCerta AI" exporterVersion="2026-11-18">
+  <bpmn:process id="A" name="ANALISTA | Reprodução histórica e PDF" isExecutable="false">
+    <bpmn:documentation>Fluxo principal implementado, restrito ao analista. Sem agendamento automático: o usuário solicita a reprodução do lote histórico. Falhas de autorização interrompem a requisição. O snapshot privado expira em 30 minutos. GenAI não calcula scores. A revisão não registra ações em transportadoras nem altera pedidos Olist.</bpmn:documentation>
+    <bpmn:laneSet id="A_lanes">
+      <bpmn:lane id="A_user" name="Analista">
+        <bpmn:flowNodeRef>A_start</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>A_request</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>A_review</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>A_pdf</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>A_end</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="A_sys" name="Sistema">
+        <bpmn:flowNodeRef>A_auth</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>A_load</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>A_valid</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>A_error</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>A_score</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>A_queue</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>A_show</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>A_summary</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>A_complete</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>A_fallback</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>A_merge</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>A_build</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>A_end_pdf</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="A_start" name="Analista autenticado">
+      <bpmn:outgoing>A_f01</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask id="A_request" name="Solicitar fila histórica">
+      <bpmn:incoming>A_f01</bpmn:incoming>
+      <bpmn:outgoing>A_f02</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="A_auth" name="Conferir sessão e perfil de analista">
+      <bpmn:incoming>A_f02</bpmn:incoming>
+      <bpmn:outgoing>A_f03</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="A_load" name="Consultar entradas D−1 e modelo salvo">
+      <bpmn:incoming>A_f03</bpmn:incoming>
+      <bpmn:outgoing>A_f04</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="A_valid" name="Contrato válido?" default="A_f05">
+      <bpmn:incoming>A_f04</bpmn:incoming>
+      <bpmn:outgoing>A_f05</bpmn:outgoing>
+      <bpmn:outgoing>A_f06</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="A_error" name="Informar indisponibilidade">
+      <bpmn:incoming>A_f05</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:serviceTask id="A_score" name="Pontuar apenas pendentes elegíveis">
+      <bpmn:documentation>CatBoost VER0.7; 111 atributos disponíveis no checkpoint 00:00 de D−1. Pedidos já entregues não são pontuados: zero convencional não significa risco zero.</bpmn:documentation>
+      <bpmn:incoming>A_f06</bpmn:incoming>
+      <bpmn:outgoing>A_f07</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="A_queue" name="Selecionar por dia: ceil(65% × pendentes)">
+      <bpmn:documentation>Ordenar por score decrescente; desempate pela ordem original. Cota diária, não 65% do lote inteiro.</bpmn:documentation>
+      <bpmn:incoming>A_f07</bpmn:incoming>
+      <bpmn:outgoing>A_f08</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="A_show" name="Exibir indicadores e guardar snapshot da análise">
+      <bpmn:incoming>A_f08</bpmn:incoming>
+      <bpmn:outgoing>A_f09</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:userTask id="A_review" name="Revisar fila, filtros e detalhes">
+      <bpmn:incoming>A_f09</bpmn:incoming>
+      <bpmn:outgoing>A_f10</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="A_pdf" name="Solicitar PDF?" default="A_f11">
+      <bpmn:incoming>A_f10</bpmn:incoming>
+      <bpmn:outgoing>A_f11</bpmn:outgoing>
+      <bpmn:outgoing>A_f12</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="A_end" name="Consulta concluída">
+      <bpmn:incoming>A_f11</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:serviceTask id="A_summary" name="Solicitar resumo ao Gemini com indicadores agregados">
+      <bpmn:incoming>A_f12</bpmn:incoming>
+      <bpmn:outgoing>A_f13</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="A_complete" name="Resumo completo disponível?" default="A_f14">
+      <bpmn:incoming>A_f13</bpmn:incoming>
+      <bpmn:outgoing>A_f14</bpmn:outgoing>
+      <bpmn:outgoing>A_f15</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="A_fallback" name="Preparar resumo de contingência com aviso">
+      <bpmn:incoming>A_f14</bpmn:incoming>
+      <bpmn:outgoing>A_f16</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="A_merge" name="">
+      <bpmn:incoming>A_f15</bpmn:incoming>
+      <bpmn:incoming>A_f16</bpmn:incoming>
+      <bpmn:outgoing>A_f17</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="A_build" name="Gerar PDF com gráficos e resumo identificado">
+      <bpmn:incoming>A_f17</bpmn:incoming>
+      <bpmn:outgoing>A_f18</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="A_end_pdf" name="PDF disponível ao analista">
+      <bpmn:incoming>A_f18</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="A_f01" sourceRef="A_start" targetRef="A_request" />
+    <bpmn:sequenceFlow id="A_f02" sourceRef="A_request" targetRef="A_auth" />
+    <bpmn:sequenceFlow id="A_f03" sourceRef="A_auth" targetRef="A_load" />
+    <bpmn:sequenceFlow id="A_f04" sourceRef="A_load" targetRef="A_valid" />
+    <bpmn:sequenceFlow id="A_f05" sourceRef="A_valid" targetRef="A_error" name="Não" />
+    <bpmn:sequenceFlow id="A_f06" sourceRef="A_valid" targetRef="A_score" name="Sim">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">contrato_valido</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="A_f07" sourceRef="A_score" targetRef="A_queue" />
+    <bpmn:sequenceFlow id="A_f08" sourceRef="A_queue" targetRef="A_show" />
+    <bpmn:sequenceFlow id="A_f09" sourceRef="A_show" targetRef="A_review" />
+    <bpmn:sequenceFlow id="A_f10" sourceRef="A_review" targetRef="A_pdf" />
+    <bpmn:sequenceFlow id="A_f11" sourceRef="A_pdf" targetRef="A_end" name="Não" />
+    <bpmn:sequenceFlow id="A_f12" sourceRef="A_pdf" targetRef="A_summary" name="Sim">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">pdf_solicitado</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="A_f13" sourceRef="A_summary" targetRef="A_complete" />
+    <bpmn:sequenceFlow id="A_f14" sourceRef="A_complete" targetRef="A_fallback" name="Não / falha da API" />
+    <bpmn:sequenceFlow id="A_f15" sourceRef="A_complete" targetRef="A_merge" name="Sim">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">resumo_completo</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="A_f16" sourceRef="A_fallback" targetRef="A_merge" />
+    <bpmn:sequenceFlow id="A_f17" sourceRef="A_merge" targetRef="A_build" />
+    <bpmn:sequenceFlow id="A_f18" sourceRef="A_build" targetRef="A_end_pdf" />
+  </bpmn:process>
+  <bpmn:process id="L" name="CLIENTE E ANALISTA | Loja demonstrativa" isExecutable="false">
+    <bpmn:documentation>Fluxo independente da coorte histórica. Etapas representam requisições/sessões distintas. Alterações são feitas somente por analista autorizado; controle de versão e histórico de eventos. Cliente vê apenas seus pedidos. Sem pagamento ou envio real, sem integração de rastreio e sem previsão ML para novos pedidos. Recusas de validação não alteram o banco; fluxos de erro de formulário foram omitidos da visão de negócio.</bpmn:documentation>
+    <bpmn:laneSet id="L_lanes">
+      <bpmn:lane id="L_user" name="Cliente / analista">
+        <bpmn:flowNodeRef>L_start</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>L_request</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>L_edit</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>L_read</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>L_end</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="L_sys" name="Sistema">
+        <bpmn:flowNodeRef>L_save</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>L_change</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>L_validate</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>L_merge</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="L_start" name="Cliente autenticado">
+      <bpmn:outgoing>L_f01</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask id="L_request" name="Confirmar pedido no catálogo demonstrativo">
+      <bpmn:incoming>L_f01</bpmn:incoming>
+      <bpmn:outgoing>L_f02</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="L_save" name="Validar e salvar pedido + evento inicial">
+      <bpmn:incoming>L_f02</bpmn:incoming>
+      <bpmn:outgoing>L_f03</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="L_change" name="Analista solicitou atualização?" default="L_f04">
+      <bpmn:incoming>L_f03</bpmn:incoming>
+      <bpmn:outgoing>L_f04</bpmn:outgoing>
+      <bpmn:outgoing>L_f05</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="L_edit" name="Definir status, prazo ou responsável">
+      <bpmn:incoming>L_f05</bpmn:incoming>
+      <bpmn:outgoing>L_f06</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="L_validate" name="Conferir versão, permissão e transição; gravar evento">
+      <bpmn:incoming>L_f06</bpmn:incoming>
+      <bpmn:outgoing>L_f07</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="L_merge" name="">
+      <bpmn:incoming>L_f04</bpmn:incoming>
+      <bpmn:incoming>L_f07</bpmn:incoming>
+      <bpmn:outgoing>L_f08</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="L_read" name="Cliente acompanha seus pedidos e prazos registrados">
+      <bpmn:incoming>L_f08</bpmn:incoming>
+      <bpmn:outgoing>L_f09</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="L_end" name="Acompanhamento demonstrativo">
+      <bpmn:incoming>L_f09</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="L_f01" sourceRef="L_start" targetRef="L_request" />
+    <bpmn:sequenceFlow id="L_f02" sourceRef="L_request" targetRef="L_save" />
+    <bpmn:sequenceFlow id="L_f03" sourceRef="L_save" targetRef="L_change" />
+    <bpmn:sequenceFlow id="L_f04" sourceRef="L_change" targetRef="L_merge" name="Não" />
+    <bpmn:sequenceFlow id="L_f05" sourceRef="L_change" targetRef="L_edit" name="Sim">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">atualizacao_solicitada</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="L_f06" sourceRef="L_edit" targetRef="L_validate" />
+    <bpmn:sequenceFlow id="L_f07" sourceRef="L_validate" targetRef="L_merge" />
+    <bpmn:sequenceFlow id="L_f08" sourceRef="L_merge" targetRef="L_read" />
+    <bpmn:sequenceFlow id="L_f09" sourceRef="L_read" targetRef="L_end" />
+  </bpmn:process>
+  <bpmn:process id="G" name="ASSISTENTE | Cliente ou analista" isExecutable="false">
+    <bpmn:documentation>Interação opcional independente, acessível pelos dois perfis após autenticação. Contexto de Olist exclusivo do analista; cliente recebe somente informações autorizadas da loja. Conversas duram 30 minutos na memória; feedback explícito é salvo em app_web.assistente_feedback. Referências não garantem veracidade integral. A GenAI não escreve pedidos, não estima datas ausentes e não substitui o ML.</bpmn:documentation>
+    <bpmn:laneSet id="G_lanes">
+      <bpmn:lane id="G_user" name="Usuário">
+        <bpmn:flowNodeRef>G_start</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>G_ask</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>G_review</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>G_end</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="G_sys" name="Sistema">
+        <bpmn:flowNodeRef>G_context</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>G_call</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>G_ok</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>G_show</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>G_notice</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>G_merge</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="G_start" name="Usuário autenticado">
+      <bpmn:outgoing>G_f01</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask id="G_ask" name="Perguntar ao assistente">
+      <bpmn:incoming>G_f01</bpmn:incoming>
+      <bpmn:outgoing>G_f02</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="G_context" name="Conferir acesso e montar contexto com evidências">
+      <bpmn:incoming>G_f02</bpmn:incoming>
+      <bpmn:outgoing>G_f03</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="G_call" name="Consultar Gemini com memória curta e limites de tentativa">
+      <bpmn:incoming>G_f03</bpmn:incoming>
+      <bpmn:outgoing>G_f04</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="G_ok" name="Resposta disponível?" default="G_f05">
+      <bpmn:incoming>G_f04</bpmn:incoming>
+      <bpmn:outgoing>G_f05</bpmn:outgoing>
+      <bpmn:outgoing>G_f06</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="G_show" name="Conferir referências e exibir resposta assistida">
+      <bpmn:incoming>G_f06</bpmn:incoming>
+      <bpmn:outgoing>G_f07</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="G_notice" name="Exibir aviso de indisponibilidade">
+      <bpmn:incoming>G_f05</bpmn:incoming>
+      <bpmn:outgoing>G_f08</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="G_merge" name="">
+      <bpmn:incoming>G_f07</bpmn:incoming>
+      <bpmn:incoming>G_f08</bpmn:incoming>
+      <bpmn:outgoing>G_f09</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="G_review" name="Ler evidências; avaliar resposta quando disponível">
+      <bpmn:incoming>G_f09</bpmn:incoming>
+      <bpmn:outgoing>G_f10</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="G_end" name="Interação concluída">
+      <bpmn:incoming>G_f10</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="G_f01" sourceRef="G_start" targetRef="G_ask" />
+    <bpmn:sequenceFlow id="G_f02" sourceRef="G_ask" targetRef="G_context" />
+    <bpmn:sequenceFlow id="G_f03" sourceRef="G_context" targetRef="G_call" />
+    <bpmn:sequenceFlow id="G_f04" sourceRef="G_call" targetRef="G_ok" />
+    <bpmn:sequenceFlow id="G_f05" sourceRef="G_ok" targetRef="G_notice" name="Não" />
+    <bpmn:sequenceFlow id="G_f06" sourceRef="G_ok" targetRef="G_show" name="Sim">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">resposta_disponivel</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="G_f07" sourceRef="G_show" targetRef="G_merge" />
+    <bpmn:sequenceFlow id="G_f08" sourceRef="G_notice" targetRef="G_merge" />
+    <bpmn:sequenceFlow id="G_f09" sourceRef="G_merge" targetRef="G_review" />
+    <bpmn:sequenceFlow id="G_f10" sourceRef="G_review" targetRef="G_end" />
+  </bpmn:process>
+  <bpmn:collaboration id="Collaboration_EntregaCerta">
+    <bpmn:participant id="A_pool" name="ANALISTA | Reprodução histórica e PDF" processRef="A" />
+    <bpmn:participant id="L_pool" name="CLIENTE E ANALISTA | Loja demonstrativa" processRef="L" />
+    <bpmn:participant id="G_pool" name="ASSISTENTE | Cliente ou analista" processRef="G" />
+  </bpmn:collaboration>
+  <bpmndi:BPMNDiagram id="Diagram_Atual" name="Fluxos implementados — D−1, loja e assistente">
+    <bpmndi:BPMNPlane id="Plane_Atual" bpmnElement="Collaboration_EntregaCerta">
+      <bpmndi:BPMNShape id="A_pool_di" bpmnElement="A_pool" isExpanded="true" isHorizontal="true">
+        <dc:Bounds x="60" y="80" width="2180" height="730" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="A_user_di" bpmnElement="A_user" isHorizontal="true">
+        <dc:Bounds x="90" y="80" width="2150" height="190" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="A_sys_di" bpmnElement="A_sys" isHorizontal="true">
+        <dc:Bounds x="90" y="270" width="2150" height="540" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="A_start_di" bpmnElement="A_start">
+        <dc:Bounds x="140" y="150" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="88" y="196" width="140" height="50" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="A_request_di" bpmnElement="A_request">
+        <dc:Bounds x="230" y="130" width="170" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="A_auth_di" bpmnElement="A_auth">
+        <dc:Bounds x="440" y="330" width="170" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="A_load_di" bpmnElement="A_load">
+        <dc:Bounds x="650" y="330" width="170" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="A_valid_di" bpmnElement="A_valid">
+        <dc:Bounds x="870" y="345" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="830" y="298" width="130" height="35" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="A_error_di" bpmnElement="A_error">
+        <dc:Bounds x="877" y="680" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="825" y="726" width="140" height="50" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="A_score_di" bpmnElement="A_score">
+        <dc:Bounds x="1000" y="330" width="170" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="A_queue_di" bpmnElement="A_queue">
+        <dc:Bounds x="1220" y="330" width="170" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="A_show_di" bpmnElement="A_show">
+        <dc:Bounds x="1440" y="330" width="170" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="A_review_di" bpmnElement="A_review">
+        <dc:Bounds x="1650" y="130" width="170" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="A_pdf_di" bpmnElement="A_pdf">
+        <dc:Bounds x="1880" y="145" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1835" y="108" width="140" height="30" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="A_end_di" bpmnElement="A_end">
+        <dc:Bounds x="2130" y="152" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2078" y="198" width="140" height="50" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="A_summary_di" bpmnElement="A_summary">
+        <dc:Bounds x="1820" y="490" width="190" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="A_complete_di" bpmnElement="A_complete">
+        <dc:Bounds x="1600" y="510" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1510" y="465" width="220" height="35" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="A_fallback_di" bpmnElement="A_fallback">
+        <dc:Bounds x="1550" y="660" width="190" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="A_merge_di" bpmnElement="A_merge">
+        <dc:Bounds x="1390" y="510" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1338" y="570" width="154" height="50" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="A_build_di" bpmnElement="A_build">
+        <dc:Bounds x="1130" y="490" width="190" height="90" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="A_end_pdf_di" bpmnElement="A_end_pdf">
+        <dc:Bounds x="1020" y="517" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="968" y="563" width="140" height="50" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="A_f01_di" bpmnElement="A_f01">
+        <di:waypoint x="176" y="168" />
+        <di:waypoint x="230" y="168" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="A_f02_di" bpmnElement="A_f02">
+        <di:waypoint x="400" y="170" />
+        <di:waypoint x="420" y="170" />
+        <di:waypoint x="420" y="370" />
+        <di:waypoint x="440" y="370" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="A_f03_di" bpmnElement="A_f03">
+        <di:waypoint x="610" y="370" />
+        <di:waypoint x="650" y="370" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="A_f04_di" bpmnElement="A_f04">
+        <di:waypoint x="820" y="370" />
+        <di:waypoint x="870" y="370" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="A_f05_di" bpmnElement="A_f05">
+        <di:waypoint x="895" y="395" />
+        <di:waypoint x="895" y="680" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="910" y="425" width="55" height="25" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="A_f06_di" bpmnElement="A_f06">
+        <di:waypoint x="920" y="370" />
+        <di:waypoint x="1000" y="370" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="945" y="340" width="50" height="25" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="A_f07_di" bpmnElement="A_f07">
+        <di:waypoint x="1170" y="370" />
+        <di:waypoint x="1220" y="370" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="A_f08_di" bpmnElement="A_f08">
+        <di:waypoint x="1390" y="370" />
+        <di:waypoint x="1440" y="370" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="A_f09_di" bpmnElement="A_f09">
+        <di:waypoint x="1610" y="370" />
+        <di:waypoint x="1630" y="370" />
+        <di:waypoint x="1630" y="170" />
+        <di:waypoint x="1650" y="170" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="A_f10_di" bpmnElement="A_f10">
+        <di:waypoint x="1820" y="170" />
+        <di:waypoint x="1880" y="170" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="A_f11_di" bpmnElement="A_f11">
+        <di:waypoint x="1930" y="170" />
+        <di:waypoint x="2130" y="170" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2020" y="140" width="45" height="25" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="A_f12_di" bpmnElement="A_f12">
+        <di:waypoint x="1905" y="195" />
+        <di:waypoint x="1905" y="490" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1920" y="290" width="45" height="25" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="A_f13_di" bpmnElement="A_f13">
+        <di:waypoint x="1820" y="535" />
+        <di:waypoint x="1650" y="535" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="A_f14_di" bpmnElement="A_f14">
+        <di:waypoint x="1625" y="560" />
+        <di:waypoint x="1625" y="660" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1640" y="596" width="125" height="30" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="A_f15_di" bpmnElement="A_f15">
+        <di:waypoint x="1600" y="535" />
+        <di:waypoint x="1440" y="535" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1495" y="540" width="45" height="25" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="A_f16_di" bpmnElement="A_f16">
+        <di:waypoint x="1550" y="700" />
+        <di:waypoint x="1415" y="700" />
+        <di:waypoint x="1415" y="560" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="A_f17_di" bpmnElement="A_f17">
+        <di:waypoint x="1390" y="535" />
+        <di:waypoint x="1320" y="535" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="A_f18_di" bpmnElement="A_f18">
+        <di:waypoint x="1130" y="535" />
+        <di:waypoint x="1056" y="535" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="L_pool_di" bpmnElement="L_pool" isExpanded="true" isHorizontal="true">
+        <dc:Bounds x="60" y="850" width="2180" height="430" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="L_user_di" bpmnElement="L_user" isHorizontal="true">
+        <dc:Bounds x="90" y="850" width="2150" height="170" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="L_sys_di" bpmnElement="L_sys" isHorizontal="true">
+        <dc:Bounds x="90" y="1020" width="2150" height="260" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="L_start_di" bpmnElement="L_start">
+        <dc:Bounds x="140" y="920" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="88" y="966" width="140" height="50" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="L_request_di" bpmnElement="L_request">
+        <dc:Bounds x="230" y="900" width="180" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="L_save_di" bpmnElement="L_save">
+        <dc:Bounds x="480" y="1060" width="190" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="L_change_di" bpmnElement="L_change">
+        <dc:Bounds x="770" y="1075" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="700" y="1028" width="190" height="35" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="L_edit_di" bpmnElement="L_edit">
+        <dc:Bounds x="980" y="900" width="180" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="L_validate_di" bpmnElement="L_validate">
+        <dc:Bounds x="1240" y="1060" width="200" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="L_merge_di" bpmnElement="L_merge">
+        <dc:Bounds x="1540" y="1075" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1488" y="1135" width="154" height="50" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="L_read_di" bpmnElement="L_read">
+        <dc:Bounds x="1750" y="900" width="200" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="L_end_di" bpmnElement="L_end">
+        <dc:Bounds x="2110" y="920" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2058" y="966" width="140" height="50" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="L_f01_di" bpmnElement="L_f01">
+        <di:waypoint x="176" y="938" />
+        <di:waypoint x="230" y="938" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="L_f02_di" bpmnElement="L_f02">
+        <di:waypoint x="410" y="940" />
+        <di:waypoint x="440" y="940" />
+        <di:waypoint x="440" y="1100" />
+        <di:waypoint x="480" y="1100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="L_f03_di" bpmnElement="L_f03">
+        <di:waypoint x="670" y="1100" />
+        <di:waypoint x="770" y="1100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="L_f04_di" bpmnElement="L_f04">
+        <di:waypoint x="795" y="1125" />
+        <di:waypoint x="795" y="1220" />
+        <di:waypoint x="1565" y="1220" />
+        <di:waypoint x="1565" y="1125" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1150" y="1190" width="45" height="25" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="L_f05_di" bpmnElement="L_f05">
+        <di:waypoint x="820" y="1100" />
+        <di:waypoint x="900" y="1100" />
+        <di:waypoint x="900" y="940" />
+        <di:waypoint x="980" y="940" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="912" y="1005" width="45" height="25" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="L_f06_di" bpmnElement="L_f06">
+        <di:waypoint x="1160" y="940" />
+        <di:waypoint x="1200" y="940" />
+        <di:waypoint x="1200" y="1100" />
+        <di:waypoint x="1240" y="1100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="L_f07_di" bpmnElement="L_f07">
+        <di:waypoint x="1440" y="1100" />
+        <di:waypoint x="1540" y="1100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="L_f08_di" bpmnElement="L_f08">
+        <di:waypoint x="1590" y="1100" />
+        <di:waypoint x="1650" y="1100" />
+        <di:waypoint x="1650" y="940" />
+        <di:waypoint x="1750" y="940" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="L_f09_di" bpmnElement="L_f09">
+        <di:waypoint x="1950" y="940" />
+        <di:waypoint x="2110" y="940" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="G_pool_di" bpmnElement="G_pool" isExpanded="true" isHorizontal="true">
+        <dc:Bounds x="60" y="1320" width="2180" height="450" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="G_user_di" bpmnElement="G_user" isHorizontal="true">
+        <dc:Bounds x="90" y="1320" width="2150" height="160" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="G_sys_di" bpmnElement="G_sys" isHorizontal="true">
+        <dc:Bounds x="90" y="1480" width="2150" height="290" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="G_start_di" bpmnElement="G_start">
+        <dc:Bounds x="140" y="1390" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="88" y="1436" width="140" height="50" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="G_ask_di" bpmnElement="G_ask">
+        <dc:Bounds x="230" y="1370" width="180" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="G_context_di" bpmnElement="G_context">
+        <dc:Bounds x="470" y="1540" width="200" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="G_call_di" bpmnElement="G_call">
+        <dc:Bounds x="740" y="1540" width="210" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="G_ok_di" bpmnElement="G_ok">
+        <dc:Bounds x="1030" y="1555" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1085" y="1585" width="115" height="45" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="G_show_di" bpmnElement="G_show">
+        <dc:Bounds x="1210" y="1490" width="210" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="G_notice_di" bpmnElement="G_notice">
+        <dc:Bounds x="1210" y="1630" width="210" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="G_merge_di" bpmnElement="G_merge">
+        <dc:Bounds x="1530" y="1555" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1478" y="1615" width="154" height="50" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="G_review_di" bpmnElement="G_review">
+        <dc:Bounds x="1740" y="1370" width="210" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="G_end_di" bpmnElement="G_end">
+        <dc:Bounds x="2110" y="1390" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2058" y="1436" width="140" height="50" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="G_f01_di" bpmnElement="G_f01">
+        <di:waypoint x="176" y="1408" />
+        <di:waypoint x="230" y="1408" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="G_f02_di" bpmnElement="G_f02">
+        <di:waypoint x="410" y="1410" />
+        <di:waypoint x="440" y="1410" />
+        <di:waypoint x="440" y="1580" />
+        <di:waypoint x="470" y="1580" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="G_f03_di" bpmnElement="G_f03">
+        <di:waypoint x="670" y="1580" />
+        <di:waypoint x="740" y="1580" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="G_f04_di" bpmnElement="G_f04">
+        <di:waypoint x="950" y="1580" />
+        <di:waypoint x="1030" y="1580" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="G_f05_di" bpmnElement="G_f05">
+        <di:waypoint x="1055" y="1605" />
+        <di:waypoint x="1055" y="1670" />
+        <di:waypoint x="1210" y="1670" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1120" y="1640" width="45" height="25" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="G_f06_di" bpmnElement="G_f06">
+        <di:waypoint x="1055" y="1555" />
+        <di:waypoint x="1055" y="1530" />
+        <di:waypoint x="1210" y="1530" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1120" y="1500" width="45" height="25" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="G_f07_di" bpmnElement="G_f07">
+        <di:waypoint x="1420" y="1530" />
+        <di:waypoint x="1555" y="1530" />
+        <di:waypoint x="1555" y="1555" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="G_f08_di" bpmnElement="G_f08">
+        <di:waypoint x="1420" y="1670" />
+        <di:waypoint x="1555" y="1670" />
+        <di:waypoint x="1555" y="1605" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="G_f09_di" bpmnElement="G_f09">
+        <di:waypoint x="1580" y="1580" />
+        <di:waypoint x="1640" y="1580" />
+        <di:waypoint x="1640" y="1410" />
+        <di:waypoint x="1740" y="1410" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="G_f10_di" bpmnElement="G_f10">
+        <di:waypoint x="1950" y="1410" />
+        <di:waypoint x="2110" y="1410" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

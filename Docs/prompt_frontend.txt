@@ -1,0 +1,1331 @@
+Frontend do EntregaCerta AI
+
+Estamos desenvolvendo o EntregaCerta AI para o projeto integrador do Bootcamp
+TCS e queremos que você crie o frontend do zero. Precisamos de uma interface
+completa para a área do analista e para o consumidor, com o visual e os
+comportamentos que descrevemos abaixo.
+
+Queremos usar HTML, CSS e JavaScript. Demos bastante detalhe nas cores,
+medidas, textos e animações para que você consiga construir as páginas só com
+este prompt, sem depender de screenshots, arquivos de código ou um site de
+referência. Os nomes dos arquivos abaixo indicam o que você deve criar.
+
+1. O que queremos fazer
+
+Crie cinco páginas com estas rotas:
+  /            -> frontend/index.html
+  /dashboard   -> frontend/dashboard.html
+  /pedidos     -> frontend/pedidos.html
+  /cliente     -> frontend/cliente.html
+  /entrar      -> frontend/entrar.html
+
+Os arquivos públicos de estilo, scripts e imagens devem ser servidos por
+/static/. As páginas privadas precisam respeitar as permissões do servidor;
+não disponibilize seus HTML por uma rota pública de arquivos estáticos.
+Confira os links diretos, as âncoras, o recarregamento e a navegação Voltar e
+Avançar. Queremos páginas com endereços próprios, não seções escondidas em
+uma única tela.
+
+As descrições deste prompt são a especificação do trabalho. Escreva os arquivos
+necessários, incluindo o SVG da logo, as ilustrações, os estilos e a lógica de
+interação. Mantenha as medidas, a paleta, os textos e a organização definidos.
+Nos pontos sem medida exata, siga o padrão visual dos componentes descritos.
+
+O escopo é o frontend. Planeje a integração com um backend FastAPI e PostgreSQL
+pelas APIs descritas na seção 18. Se estiver trabalhando dentro do nosso
+repositório, preserve backend, modelos de ML, notebooks, banco, contas e
+configurações. Não precisamos treinar um modelo ou fazer deploy neste pedido.
+
+2. Como o projeto funciona
+
+O projeto se chama EntregaCerta AI. Na marca, usamos "entregacerta" em
+minúsculas, com um pequeno selo AI ao lado.
+
+Queremos atender dois públicos:
+  a) Analista: consultar pedidos históricos, interpretar risco relativo,
+     organizar uma fila de revisão, explorar detalhes, gerar relatório em PDF
+     e operar pedidos da loja demonstrativa.
+  b) Cliente: explorar um catálogo, criar pedidos demonstrativos, acompanhar
+     etapas e prazos disponíveis, testar rastreio ilustrativo e conversar com
+     o assistente sobre informações autorizadas de sua própria conta.
+
+As duas áreas devem seguir o mesmo visual. A navegação muda conforme o uso:
+o analista tem menu lateral persistente; o cliente tem cabeçalho horizontal,
+catálogo, carrinho e seus pedidos.
+
+Para integrar o painel, considere a política do modelo CatBoost VER0.7.
+O checkpoint histórico D−1 é
+00:00 do dia anterior à data prometida de entrega. Só os pedidos elegíveis ainda
+pendentes naquele instante recebem score. O backend seleciona diariamente
+ceil(0,65 × pendentes daquele dia), ordenados por risco.
+
+Alguns cuidados com a forma de apresentar os dados:
+  - Score entre 0 e 1 representa risco relativo; não é probabilidade calibrada.
+  - Um score 0,8 não significa 80% de chance de atraso.
+  - A capacidade de 65% se refere aos pendentes de cada dia, não ao lote inteiro.
+  - Devido ao arredondamento diário, a fração agregada pode ultrapassar 65%.
+  - Fora da fila não significa entrega garantida no prazo.
+  - Pedidos já entregues antes do checkpoint devem aparecer como "Não pontuado"
+    quando essa situação vier da API. O zero convencional não é risco zero.
+  - Não inventar dias de atraso, causas de atraso, ganhos operacionais ou ROI.
+  - Os pedidos históricos Olist são separados dos pedidos criados na loja.
+  - Rastreio demonstrativo não consulta transportadoras e não executa ML.
+  - A IA generativa interpreta contexto fornecido pelo servidor; não gera scores.
+
+Todas as contagens, scores, datas de consulta e descrições de versão devem
+vir da API. A tela deve aceitar lotes de tamanhos diferentes, inclusive uma
+fila vazia, sem depender de números históricos fixos no HTML ou no JavaScript.
+
+As métricas históricas do modelo não são os quatro indicadores do dashboard.
+Não acrescente cartões de precisão, recall ou acurácia calculados a partir de
+scores sem rótulos. O histograma da fila também não mede acurácia.
+
+3. Tecnologias e organização dos arquivos
+
+Queremos desenvolver com HTML5, CSS3, JavaScript moderno e SVG. Use recursos
+nativos do navegador:
+CSS Grid, Flexbox, dialog, details/summary, IntersectionObserver,
+requestAnimationFrame, Fetch API, AbortController e View Transitions quando
+suportadas. A integração deve considerar FastAPI servindo páginas e APIs
+na mesma origem.
+
+Crie a interface sem React, Vue, Next.js, Tailwind ou Bootstrap. Os efeitos
+descritos podem ser feitos com CSS e JavaScript, sem GSAP, Three.js, Rive ou
+WebGL. A caixa da intro deve ser CSS 3D; a ilustração da página inicial deve
+ser SVG. Faça os gráficos simples do dashboard com elementos do DOM.
+
+Organize os arquivos a criar em frontend/, com estas responsabilidades:
+  index.html          Página inicial, intro e apresentação do processo.
+  dashboard.html      Área do analista, indicadores, fila e operação da loja.
+  pedidos.html        Explorador histórico com filtros e detalhes.
+  cliente.html        Catálogo, rastreio demonstrativo, pedidos e carrinho.
+  entrar.html         Login e cadastro público de clientes.
+  logo.svg            Logo e favicon vetoriais, desenhados como na seção 5.
+  style.css           Tokens, base, home, intro, componentes e chat base.
+  dashboard.css       Shell do analista e ajustes do dashboard.
+  pedidos.css         Filtros, tabela e detalhes do explorador.
+  conta.css           Login, cliente, carrinho e operação demonstrativa.
+  assistente.css      Toolbar, ações, referências e evidências do assistente.
+  rastreio-demo.css    Estilos isolados do rastreio ilustrativo.
+  script.js           Home, intro, movimento, menu lateral e fila do dashboard.
+  auth.js             Sessão, perfil, wrapper de fetch, CSRF e logout.
+  entrar.js           Alternância de login/cadastro e envio do formulário.
+  cliente.js          Catálogo, carrinho e pedidos do cliente.
+  pedidos.js          Consulta paginada, filtros e modal histórico.
+  operacao.js         Prazo, responsável, status e auditoria dos pedidos demo.
+  assistente.js       Drawer compartilhado, conversa, feedback e evidências.
+  relatorio.js        Geração e download do PDF do analista.
+  rastreio-demo.js     Cenários locais explicitamente fictícios.
+
+Carregue style.css antes dos estilos específicos. A organização por página deve
+ser:
+  Início: style.css; auth.js, script.js e assistente.js.
+  Dashboard: style.css, dashboard.css e conta.css; auth.js, script.js,
+    assistente.js, operacao.js e relatorio.js.
+  Pedidos: style.css, dashboard.css, pedidos.css; auth.js, script.js,
+    assistente.js e pedidos.js.
+  Cliente: style.css, conta.css, rastreio-demo.css; auth.js, script.js,
+    assistente.js, cliente.js e rastreio-demo.js.
+  Entrar: style.css e conta.css; auth.js, script.js, assistente.js e entrar.js.
+
+Use defer nos scripts. O módulo do assistente pode criar sua estrutura e
+carregar assistente.css uma única vez em cada página. Os módulos compartilhados
+devem verificar se o componente existe antes de inicializá-lo. Evite listeners,
+IDs ou painéis duplicados. Estilos de dashboard, pedidos e conta devem ajustar
+a base sem alterar a animação da intro ou a caixa ilustrativa da home.
+
+4. Visual, cores e fontes
+
+Queremos manter o contraste entre verde bem escuro, fundo claro e verde-lima.
+Na página inicial, o título deve ser grande e chamativo. Nas telas de análise,
+a prioridade é conseguir ler os dados com facilidade, com textos menores,
+espaçamento confortável e divisórias discretas.
+
+Cores e variáveis do CSS:
+  --ink       #1c251d       Texto principal.
+  --dark      #171d18       Hero, cabeçalhos e menu lateral.
+  --dark-soft #232c23       Superfícies escuras secundárias.
+  --paper     #f3f4ed       Fundo claro principal.
+  --white     #ffffff       Painéis e cartões brancos.
+  --lime      #d4ff3f       Marca, chamadas e estados de destaque.
+  --green     #425c32       Verde de apoio.
+  --muted     #65705f       Texto secundário.
+  --line      #dadfd3       Divisórias e bordas.
+  --radius    18px          Raio-base dos painéis.
+  --ease      cubic-bezier(.22,1,.36,1)
+
+Outras superfícies recorrentes:
+  #19271f     Hero do cliente e painel editorial do login.
+  #202823     Fundo do drawer do assistente.
+  #fafbf6     Cartões claros e controles suaves.
+  #e8ecdf     Seção "Como funciona".
+  #e9eddf     Cartão "Score não é certeza".
+  #eaf0f8     Mensagem bem-sucedida do assistente.
+  #e2ead7     Balão de mensagem do usuário.
+  #fff7e9     Mensagem de indisponibilidade ou erro do assistente.
+
+Tipografia:
+  - Corpo: "Segoe UI", Arial, sans-serif; 14px; line-height 1.6.
+  - Hero inicial: Impact, "Arial Narrow", "Arial Black", sans-serif;
+    font-weight 400; tamanho clamp(80px, 9.25vw, 140px); line-height .98;
+    letter-spacing -.025em. Segunda linha em itálico e verde-lima.
+  - Títulos secundários: sans-serif com tracking negativo; trechos editoriais
+    em Georgia/"Times New Roman", serif, peso 400 e itálico.
+  - Identificadores, coordenadas e pequenos códigos: Consolas ou monospace.
+  - Números de indicadores: tabular-nums, tracking negativo e peso 600/650.
+  - Eyebrows: normalmente 10–11px, peso 700, letras espaçadas .13em.
+  - Texto auxiliar/tabelas: 10–13px; manter contraste e legibilidade.
+
+Mantenha as fontes do sistema indicadas no CSS. Para comparar a aparência,
+considere que a fonte instalada, o navegador, o zoom e o tamanho da tela
+podem mudar um pouco o resultado.
+
+Base:
+  margin 0 no body; box-sizing border-box universal; headings sem margens nativas;
+  links sem sublinhado por padrão; seleção de texto em lima sobre fundo escuro;
+  [hidden] com display:none !important; antialiasing;
+  scroll suave quando permitido; fontes e valores formatados em pt-BR.
+
+Botões:
+  Base inline-flex, gap 30px, altura mínima 52px, padding 13px 22px, raio 8px,
+  texto 13px/650. Hover eleva 3px, com transição de .25s. Botão lima muda para
+  #e0ff79; botão escuro usa texto claro e seta lima; outline tem borda fina.
+  Setas ↗ deslocam 2px para cima/direita no hover. Estado disabled reduz
+  opacidade e remove o cursor de ação. Preserve botões pequenos de 38–43px.
+
+Queremos conservar os cantos, as cores e os ícones descritos aqui. Evite
+acrescentar fotos de banco de imagens, ícones genéricos ou outra paleta.
+
+5. Logo e ilustrações
+
+Queremos uma marca de caixa/encomenda com um símbolo de confirmação. Desenhe
+a logo em SVG e salve em frontend/logo.svg, usando a mesma imagem no favicon,
+no cabeçalho, no menu lateral e no assistente.
+
+Geometria da logo, em uma área de 64 por 64 unidades:
+  - Fundo verde-lima #d4ff3f, quadrado de 62 por 62 começando em (1,1), com
+    cantos de raio 18.
+  - Desenho sem preenchimento, traço #192219 com espessura 4 e pontas/junções
+    arredondadas.
+  - Contorno da caixa: ligue (28,13), (14,21), (14,43), (32,53), (50,43) e
+    (50,29). Deixe a região superior direita aberta para o símbolo de confirmação.
+  - Dobra superior/frontal: ligue (14,21), (32,31) e (42,26). A aresta central
+    vai de (32,31) a (32,53).
+  - Confirmação: traço um pouco mais grosso, 4,5, ligando (35,16), (41,22) e
+    (53,10). O resultado deve ser uma caixa simples com um check integrado.
+  - Título acessível: "EntregaCerta — encomenda e confirmação".
+
+Ao lado, escreva "entregacerta" em minúsculas, peso 750 e tracking negativo,
+com um selo pequeno "AI" de borda lima fina e raio 5. No cabeçalho inicial,
+a palavra tem aproximadamente 23px. O símbolo tem 40px, com cerca de 12px
+de distância do nome. Na intro use símbolo de 34px; no menu lateral, 33px;
+no cabeçalho do assistente, 40px; dentro das mensagens, 24px.
+
+A ilustração da página inicial deve ser desenhada em SVG, numa área de
+620 por 560 unidades. Queremos uma caixa isométrica fechada, em tons de papel,
+com fita verde-lima, etiqueta e código de barras. Use estas posições para
+chegar à proporção desejada:
+  - Face superior: vértices (172,230), (316,148), (461,230), (316,314).
+    Gradiente de #f7f6eb para #b8bcaa, direção aproximada (230,125) a (410,288).
+  - Face frontal/esquerda: (172,230), (172,393), (316,477), (316,314).
+    Gradiente #dce0d0 a #919a84, direção (170,242) a (310,420).
+  - Face direita: (316,314), (316,477), (461,393), (461,230).
+    Gradiente #68765e a #34472d, direção (320,260) a (445,402).
+  - Contornos finos, aproximadamente 1,3, em verdes claros compatíveis com
+    cada face. Linha mais clara nas duas arestas que encontram o vértice frontal.
+  - Fita no topo: quadrilátero (229,197), (256,181), (402,264), (374,281),
+    em #d4ff3f. Ela continua na face direita até (402,428) e (374,444),
+    em #adcf30. A fita acompanha a perspectiva, sem parecer colada na tela.
+  - Etiqueta clara #f0f1e7 na face esquerda: (200,285), (279,331), (279,397),
+    (200,351). Cinco barras escuras verticais inclinadas pela perspectiva,
+    começando perto de x=212,225,235,248,258, com cerca de 30 unidades de altura
+    e larguras alternadas. Abaixo, linha de (204,365) a (252,393).
+  - Três pequenos traços lima na face direita, perto de (414,325), como
+    detalhe de identificação da encomenda.
+  - Sombra preta em elipse no chão, centro (316,411), raios 135 e 43,
+    opacidade 0,28. A sombra fica separada da animação de flutuação da caixa.
+
+Ao redor da caixa:
+  - Luz radial lima suave no chão, centro (310,414), raios 286 e 133,
+    opacidade central 0,2 até transparente.
+  - Piso em losango com cantos (22,352), (309,203), (601,352), (309,504),
+    linhas finas #677353 com opacidade 0,3, espaçamento equivalente a 46.
+  - Duas órbitas em torno de (310,313), inclinadas -24 graus. A externa tem
+    raios 275 e 112 e opacidade 0,45; a interna 244 e 88, tracejada 3/8,
+    opacidade 0,22. Cor #71825d.
+  - Rota pontilhada em lima, espessura 2, traços 7/7: percorre (66,407),
+    (149,360), (228,401), (301,359), (456,440), (553,388).
+  - Sinal luminoso em (83,304): ponto de raio 6, anel de raio 12 e halo de
+    raio 20. Usa lima com diferentes opacidades.
+  - Marcador de destino no alto à direita: losango lima de cantos
+    (508,181), (538,198), (508,215), (478,198), com check escuro interno.
+  - Pequenos cantos de enquadramento perto de (475,150) e (120,195), além
+    de discretos traços diagonais lima nas bordas.
+
+Todos esses desenhos são decorativos e devem ficar ocultos do leitor de tela.
+A caixa do SVG e a caixa 3D da intro são componentes separados.
+
+Para a loja demonstrativa, desenhe seis ícones vetoriais simples, de traço
+escuro, em áreas de 64 por 64: frasco com cruz, bola, panela com tampa, monitor,
+abajur e livro aberto. Eles são ilustrações de categoria, sem fingir fotos de
+produtos reais. Use fundos alternados #e4e9d9, #e3e4d8, #e8dfd1, #dae5de,
+#e3e3d1 e #dfdfcf. Nos estados vazios, use pequenos ícones de caixa ou rota.
+Crie tudo em SVG ou CSS; não dependa de imagens externas.
+
+6. Intro e animação de abertura da caixa
+
+Queremos uma abertura interativa que dê a sensação de entrar na plataforma
+por uma caixa. Ela deve chamar atenção com movimentos suaves. A caixa da
+intro e a caixa da página inicial terão animações diferentes.
+
+Ao abrir / sem âncora de retorno, mostre um dialog de tela inteira, 100dvh,
+sem borda e sem margens. A caixa começa fechada e permanece fechada enquanto
+ninguém interage. Não abra a caixa por timer, carregamento de dados, mouseover
+ou conclusão de uma animação de espera.
+
+A abertura só começa pelo botão transparente que cobre a caixa, usando clique,
+toque, Enter ou Espaço. "Pular abertura" e Escape levam diretamente ao conteúdo.
+Os links /#inicio e /#como-funciona devem evitar a intro.
+
+Composição:
+  - Marca no topo esquerdo: top 28px, left 32px.
+  - Fundo com gradientes verde/papel, luz difusa e grade sutil de 72px.
+  - Caixa centrada em x=50%, y=56%.
+  - Caption acima: largura min(88%,640px), top clamp(95px,14vh,170px).
+  - Eyebrow: "SUA PRÓXIMA DECISÃO COMEÇA AQUI".
+  - Texto inicial exato:
+    "Toque na caixa para transformar desafios em decisões."
+  - Botão "Pular abertura ↗" no canto inferior direito.
+  - Duas órbitas elípticas centradas em 50%/56%, inclinadas -28 graus.
+    Externa: largura min(78vw,580px), altura 330px, borda 1px #1d3c3735.
+    Interna: largura min(64vw,460px), altura 245px, borda branca tracejada
+    com baixa opacidade. Complete com pequenos pontos e sinais discretos.
+  - Não desenhar contorno de foco automático ao carregar.
+  - Não adicionar uma borda tracejada ao botão/área clicável da caixa. As
+    elipses decorativas descritas acima não são o contorno de foco.
+
+Medidas e posição da caixa no computador:
+  --intro-box-size:220px; --intro-box-height:180px;
+  --intro-half:110px; --intro-half-height:90px;
+  câmera com perspective:1000px;
+  .intro-zoom 400×400px, centrado por margens -200px;
+  rotação-base rotateX(-28deg) rotateY(-36deg);
+  faces com borda 3px #24371c; frente em gradiente #e1ff72 a #c1e83e,
+  costas #86a525, esquerda #b0d238, direita em #a9d02c a #86ad20;
+  face frontal com check escuro central, topo fechado com abas bem alinhadas;
+  abertura interna escura com profundidade de 34px;
+  quatro abas independentes, com origens de transformação nas suas bordas.
+
+Movimento em espera:
+  - Pai .intro-float faz translateY(0) -> translateY(-19px) -> 0,
+    duração 3s, ease-in-out, infinito.
+  - Sombra respira em sincronia, scale(1) -> .8 -> 1.
+  - Rotação pelo mouse fica no filho .intro-box, não no mesmo elemento do float.
+  - Coordenadas normalizadas da viewport entre -1 e +1.
+  - Inclinação adicional X = -y * 6 graus; Y = x * 9 graus.
+  - Atualização por requestAnimationFrame; transição .4s ease-out na espera.
+  - Hover de mouse preciso: escala do wrapper 1.06, brilho interno discreto
+    das faces e hint "Clique para abrir ↗".
+  - Ao sair da janela/área prevista, retorne suavemente à rotação-base.
+  - Sem tilt para toque, ponteiro impreciso, preferência de movimento reduzido
+    ou animações pausadas.
+
+Frases após o clique, exclusivamente no slogan da intro:
+  1. Um passo à frente.
+  2. Do dado à decisão.
+  3. Risco em foco.
+  4. Clareza para agir.
+  5. Priorize melhor.
+
+Use localStorage "entregacerta-proxima-frase". Na primeira abertura, escolha
+um índice aleatório; depois percorra o ciclo sem repetição até completar as
+cinco opções. Avance o índice somente quando a caixa for aberta. Se armazenamento
+estiver bloqueado, escolha uma frase para a visita sem falhar. O título da home
+permanece SEMPRE "UM PASSO / À FRENTE.", independentemente dessa escolha.
+
+Sequência depois do clique:
+  t=0: bloquear clique duplicado; aplicar is-started/is-opening; pausar a
+       flutuação na posição atual para evitar salto.
+  Abas front/back abrem aproximadamente ±155 graus; laterais ±150 graus,
+       transição .85s; escalone as abas em aproximadamente 50ms para que
+       a abertura pareça contínua, sem colisões visuais.
+  t=250ms: iniciar portal/preview e recorte perspectivado.
+  t=2100ms: iniciar mergulho da câmera, rotateX(-90deg) rotateY(0).
+  Duração do zoom:1300ms; escala final baseada na viewport.
+  t=3400ms: revelar/remover a cobertura com fade.
+  t=3900ms: concluir, remover transformações temporárias e restaurar navegação.
+  t=5500ms: fallback de conclusão caso algum evento visual não finalize.
+
+Ao abrir, queremos ver a própria página por dentro da caixa, dando a sensação
+de entrar nela. Mantenha a transformação matrix3d que alinha o conteúdo aos
+quatro cantos da abertura, o recorte clip-path com evenodd, as paredes internas
+em SVG e a vinheta. A abertura do recorte leva 500ms; a vinheta desaparece
+em 1s durante o mergulho.
+
+Para construir esse efeito, calcule a cada frame os quatro cantos da abertura
+da caixa em coordenadas da tela. Mapeie o retângulo do conteúdo principal
+para esse quadrilátero com uma transformação projetiva de oito parâmetros,
+convertida para matrix3d. Use a mesma geometria para recortar a sobreposição
+e posicionar as paredes internas. Ao aproximar a câmera, a abertura cresce
+até ocupar a tela e a transformação da página chega à identidade. O conteúdo
+por trás deve ser o próprio DOM da home, nunca uma imagem da página ou uma
+segunda cópia. Separe a transformação de flutuação, a inclinação e o zoom em
+camadas diferentes para que um efeito não sobrescreva o outro.
+
+Ao terminar, cancelar RAFs/timers/listeners temporários, fechar o dialog,
+limpar clip-path/transform do conteúdo, liberar scroll e focar hero-title com
+preventScroll. Esse título não recebe contorno verde visual.
+
+Se a janela redimensionar durante a abertura, a aba ficar invisível ou a
+preferência de movimento mudar, finalize com segurança. Movimento reduzido
+mantém a caixa clicável e permite entrar sem o zoom. Sem suporte a dialog ou
+sem JavaScript, o conteúdo principal deve continuar acessível.
+
+7. Página inicial
+
+Header sticky escuro:
+  altura 82px; z-index20; borda inferior branca com baixa opacidade;
+  largura interna min(1440px,calc(100% - 64px)); gap 32px;
+  marca à esquerda; links à direita com pequenos índices elevados.
+  Links: "Área do cliente 01", "Analistas 02", "Como funciona 03".
+  CTA outline "Entrar na conta ↗".
+  Hover dos links desenha sublinhado lima da esquerda para direita.
+  Depois de 24px de scroll, sombra discreta do header.
+
+Hero:
+  fundo --dark, texto --paper, cantos inferiores28px, overflow:clip.
+  conteúdo min(1360px,calc(100% - 96px)).
+  grid 1.12fr 1fr, altura mínima 600px, padding superior56px/inferior62px.
+  Esquerda:
+    "✳ INTELIGÊNCIA EM CADA ENTREGA"
+    "UM PASSO"
+    "À FRENTE." — lima, itálico, ponto final claro.
+    "Transforme sinais de risco em uma fila de ação. Mais clareza para decidir
+     quais pedidos merecem atenção primeiro."
+    Botão "Acessar dashboard ↗" e link "Entenda o processo ↓".
+    "DADOS REAIS OLIST / VALIDAÇÃO HISTÓRICA" com ponto luminoso.
+  Direita:
+    contêiner de altura 470px; SVG responsivo centralizado;
+    ilustração de encomenda isométrica descrita na seção 5;
+    coordenada "INFORMAÇÃO EM MOVIMENTO ↗";
+    etiqueta translúcida escura "DO DADO À DECISÃO" /
+    "Uma nova perspectiva para sua operação.";
+    etiqueta posicionada 5px acima da base e 50px da esquerda, padding 12px
+    18px, borda #667257, fundo #232e24e8, raio 8px, texto 11px, seta lima;
+    pequeno código "EC / 001".
+  Rodapé do hero,64px:
+    "MENOS RUÍDO. MAIS DIREÇÃO." e "ABRIR DASHBOARD ↗".
+
+Na página inicial, a caixa deve apenas flutuar com seu próprio movimento:
+  - .floating-parcel:2s ease-in-out infinito, translateY de -16px a -32px.
+  - .parcel-shadow:1s; escala 1 a .9, opacidade .8 a .5.
+  - .route-line:3s linear, dashoffset até -140.
+  - .signal-point:1s, opacidade .55 a1 e escala .9 a1.06.
+  - Não aplicar tilt agressivo seguindo o mouse nem abertura de abas ao hero.
+  - Não reutilizar nomes de keyframes da loja para essa caixa.
+
+Entradas iniciais:
+  eyebrow .8s; linhas do título .9s com 100ms de diferença;
+  descrição1s com 180ms de delay; CTAs1s com 240ms de delay;
+  ilustração 1.25s com entrada a partir de translate(30px,20px)/rotate(3deg).
+
+Seção "Como funciona":
+  fundo #e8ecdf, padding 70px, eyebrow "02 / POR TRÁS DA PRIORIDADE";
+  título "Dados que orientam. / Pessoas que decidem.", com segunda linha serifada;
+  descrição "Uma leitura clara do risco, do primeiro dado à revisão do analista.";
+  três colunas com borda superior fina e setas ↗:
+    "01 / ENTRADA" — "A realidade / é o ponto de partida."
+    "02 / MODELO"  — "Cada pedido, / uma perspectiva."
+    "03 / AÇÃO"    — "A atenção vai / para onde importa."
+  Textos dos três cartões:
+    Entrada: "Pedidos reais e anonimizados da Olist. A demonstração usa
+    registros históricos, com o lote e a origem identificados na análise."
+    Modelo: "O modelo treinado calcula um score de risco relativo de atraso.
+    Quanto maior o score, maior a prioridade na ordenação."
+    Ação: "A capacidade configurada forma a fila de revisão. O resultado apoia
+    o analista; não confirma um atraso nem determina sua causa."
+
+Depois, três accordions nativos:
+  "Como interpretar o score?"
+  "Por que apenas parte dos pedidos entra na fila?"
+  "Esta análise representa entregas em andamento?"
+  Usar details/summary, divisórias finas e indicador + que se transforma ao abrir.
+  Respostas, na mesma ordem:
+    "O score varia de 0 a 1 e serve para ordenar os pedidos. Ele não é uma
+    probabilidade calibrada. Os valores descrevem a saída do modelo, não a
+    certeza de que um pedido vai atrasar."
+    "A capacidade configurada define quantos pedidos pendentes em cada dia
+    entram na fila. Esse parâmetro representa uma hipótese de capacidade
+    operacional. Estar fora da fila não garante entrega no prazo."
+    "Não. Esta é uma reprodução histórica com dados reais e anonimizados da
+    Olist, coletados entre 2016 e 2018. O horário de consulta indica quando
+    a análise foi executada, não quando os pedidos foram realizados."
+  Espaçamento antes dos accordions: 48px. Borda superior #c5d0b7.
+  Os resumos devem ocupar toda a largura clicável, com texto à esquerda
+  e o sinal de abertura à direita.
+
+Footer escuro com marca, "Inteligência aplicada. Decisão humana.",
+texto "Projeto integrador · Bootcamp TCS", badge "Interface V2" e controle
+de pausa das animações.
+Reservar espaço inferior para que o assistente flutuante não cubra os controles.
+
+8. Menu lateral e estrutura da área do analista
+
+Queremos o mesmo menu lateral no Dashboard e em Pedidos, com o item atual
+em destaque. No computador, ele fica fixo à esquerda:
+  largura 248px, altura 100dvh, z-index50, overflow-y:auto;
+  fundo --dark, borda direita #36412e;
+  padding 28px 18px 20px; marca compacta no topo;
+  label "ESPAÇO DO ANALISTA".
+
+Navegação principal:
+  Área do cliente; Início; Dashboard; Pedidos.
+  Links com ícone, texto e seta quando previsto.
+  Item ativo: fundo lima, texto escuro, peso 700, raio 9px.
+  Demais: texto #c4ceba, hover fundo #2b3627.
+  Altura mínima48px, padding 12px 15px, gap 12px.
+
+Navegação contextual:
+  Dashboard: "NESTE PAINEL", Fila de análise, Leitura de risco, Como funciona.
+  Pedidos: "EXPLORE OS DADOS", Lista de pedidos, Leitura de risco, Como funciona.
+
+Base da sidebar:
+  nome/perfil e Sair; "DADOS REAIS. DECISÃO HUMANA.";
+  "Demonstração histórica / Olist · 2016–2018";
+  pausa de animações; assinatura EntregaCerta AI · Bootcamp TCS.
+
+Conteúdo:
+  margin-left 248px; altura mínima 100dvh.
+  Header sticky 76px, padding horizontal36px, fundo #f3f4edf5;
+  breadcrumb "ESPAÇO DO ANALISTA / Dashboard" ou "/ Pedidos";
+  badge arredondado "◷ Análise histórica".
+  Área principal max-width 1500px, padding 37px 36px 30px.
+  Títulos clamp(34px,3.3vw,49px), peso 600, tracking -.05em.
+  Segunda linha serifada/itálica em --green.
+
+Essas páginas devem abrir direto no conteúdo, sem intro ou caixa flutuante.
+
+9. Dashboard e fila de prioridade
+
+Título:
+  eyebrow "01 / CENTRO DE ANÁLISE";
+  "Seu próximo passo, / bem direcionado.";
+  descrição "Uma visão do lote. Uma fila para agir.";
+  estado de conexão e horário de consulta à direita.
+
+Ações:
+  "Gerar relatório em PDF" outline;
+  "Gerar fila de prioridade ↗" escuro, mudando para "Atualizar análise"
+  após consulta e "Calculando fila…" enquanto processa.
+  PDF desabilitado até existir uma análise válida e perfil analista.
+
+Quatro indicadores:
+  1. Pedidos avaliados.
+  2. Na fila de análise — cartão escuro com número e símbolo lima.
+  3. Capacidade da fila — percentual e descrição da base retornada pela API.
+  4. Maior score da fila — quatro casas decimais, ou travessão se fila vazia.
+
+Antes da primeira consulta, mostre "—" nos indicadores. Assim fica claro
+que os dados ainda não foram carregados.
+Cards com raio 13px, gap 14px e fundo #fafbf6; hover eleva4px com sombra suave.
+No dashboard, o destaque é escuro; respeite a sobrescrita de dashboard.css.
+
+Distribuição do conteúdo no computador:
+  grid minmax(0,1fr) 265px, gap 20px.
+  Painel principal branco, borda --line, raio 18px.
+  Coluna lateral com histograma escuro, cartão interpretativo claro e fonte.
+
+Fila:
+  eyebrow "OLHE PRIMEIRO PARA O QUE IMPORTA";
+  título "Sua fila de análise." com ponto verde;
+  botão Exportar CSV;
+  busca por identificador; ordenação Maior score/Menor score/Identificador A–Z;
+  botão Limpar; contador de resultados; selo REVISÃO HUMANA.
+
+Estado vazio inicial:
+  ilustração em círculo 88px; título "O próximo passo começa nos dados.";
+  explicação e botão "Gerar análise ↗".
+  No carregamento, explicar consulta ao banco/modelo e manter aria-busy.
+  Em erro, preservar o último resultado válido e seu horário, quando houver.
+  Se nunca houve resultado, mostrar estado vazio de falha com tentativa disponível.
+
+Tabela:
+  colunas POSIÇÃO, PEDIDO, SCORE / 0 A 1, ação de detalhes;
+  cabeçalho sticky; scroll interno máximo580px no dashboard desktop;
+  IDs em monospace, truncados visualmente sem perder o valor completo;
+  score numérico com 4 casas e barra horizontal80×3px;
+  linhas com hover #f5f9ed;
+  paginação 25/50/100, anterior/próxima e contagem de páginas.
+
+Busca, ordem e paginação alteram somente a visualização da fila recebida.
+Não recalcular prioridade, não mudar a capacidade e não selecionar uma nova
+fila a partir do subconjunto filtrado. Preserve a posição original exibida.
+
+Histograma:
+  cinco intervalos de score entre 0 e 1, bordas 0,.2,.4,.6,.8,1;
+  contagem real apenas dos selecionados;
+  barras lima sobre fundo escuro, normalizadas ao maior grupo para a largura;
+  score 1 deve ficar no último intervalo;
+  rótulos em pt-BR e números tabulares;
+  texto "Somente a fila priorizada. Este gráfico não mede acurácia."
+  Não desenhar curva ROC, mapa ou série temporal inexistente.
+
+Modal da fila:
+  dialog central largura min(520px,calc(100% - 32px)), padding 30px, raio 20px,
+  max-height calc(100dvh - 40px), scroll e backdrop com blur 7px.
+  Título "Um pedido. / Mais contexto.";
+  ID completo copiável; score; posição/total; capacidade e explicação dos limites.
+  Escape/clique no backdrop fecham, e o foco retorna ao botão de origem.
+
+CSV:
+  exportar os resultados atualmente filtrados na fila, preservando o contrato
+  posicao,order_id,score_atraso,prioridade;
+  UTF-8 com BOM e quebras CRLF; colocar entre aspas campos com vírgula,
+  aspas ou quebra de linha, duplicando aspas internas;
+  baixar por Blob/ObjectURL e liberar o recurso.
+  CSV não deve ser confundido com o relatório completo em PDF.
+
+10. Página de Pedidos
+
+Título:
+  "02 / EXPLORADOR DE PEDIDOS";
+  "Cada pedido, / uma visão completa.";
+  "Encontre, compare e entenda o que merece sua atenção.";
+  botão "Atualizar lote ↻".
+
+Quatro indicadores:
+  Pedidos no lote; Na fila do modelo; Pedidos encontrados; Na fila neste recorte.
+  Totais do lote e totais filtrados têm significados distintos.
+
+Painel:
+  eyebrow "DO PANORAMA AO DETALHE";
+  título "Explore seus pedidos."; link "Ver dashboard ↗".
+  Filtros principais em grid 1.5fr 1fr .75fr 1.25fr:
+    identificador; participação na fila; UF de destino; categoria principal.
+  Accordion "Mais filtros" com:
+    aprovação inicial/final; score mínimo/máximo entre 0 e 1.
+  Contador de filtros ativos; Limpar filtros; Aplicar filtros.
+  Ordenação: score desc/asc, aprovação desc/asc, maior valor pago.
+
+Os filtros precisam considerar o lote inteiro no servidor antes de dividir
+os resultados em páginas.
+Busca com debounce 350ms; AbortController cancela requisições obsoletas;
+contador de sequência impede resposta antiga de sobrescrever a atual.
+Timeout 60s. Intervalos invertidos devem ser rejeitados mantendo a última
+consulta válida identificada. Persistir somente preferências de filtro na sessão.
+
+Tabela com min-width 850px e scroll horizontal localizado:
+  PEDIDO / APROVAÇÃO;
+  ROTA / CATEGORIA;
+  VALOR PAGO;
+  SCORE / 0 A 1;
+  FILA;
+  Detalhes ↗.
+
+Preserve:
+  ID monospace12px, max-width 215px;
+  aprovação em texto menor; UF origem → destino;
+  categoria com underscores substituídos por espaços;
+  moeda BRL;
+  score 4 casas e barra70×3px;
+  badge "Na fila" em verde suave e "Fora da fila" neutro.
+
+Pedidos não pontuados exibem "Não pontuado" e a explicação
+"Já entregue ou fora do checkpoint". Não use "0% de risco".
+Campos ausentes são "Não informado", mantendo zero válido como zero.
+
+Modal completo:
+  largura min(660px,calc(100vw - 32px));
+  título "Os detalhes / fazem a diferença.";
+  ID copiável; painel escuro de score com número lima38px;
+  grupos em definição dl, duas colunas:
+    Pedido e destino: aprovação, rota, categoria, itens/vendedores.
+    Valores e pagamento: itens, frete, pago, tipo e parcelas.
+    Informações logísticas: prazo prometido em dias, peso em gramas,
+      distâncias média e máxima quando informadas.
+    Checkpoint: instante D−1, situação e distância do vendedor de referência,
+      quando esses campos existirem na resposta.
+  Botão para perguntar ao assistente sobre esse pedido.
+
+Datas históricas sem fuso conservam dia/hora do registro; não aplique uma
+conversão que recue a data por causa do timezone do navegador.
+Distâncias disponíveis não comprovam trajeto rodoviário nem causa de atraso.
+
+11. Gestão dos pedidos da loja demonstrativa
+
+Na parte inferior do dashboard, queremos manter a seção
+"OPERAÇÃO DEMONSTRATIVA / Pedidos da área do cliente".
+Botão "Consultar pedidos ↻"; buscar os últimos 100 pedidos e responsáveis.
+Não misturar esses registros com a tabela histórica, o histograma ou as métricas.
+
+Cada cartão mostra ID resumido, cliente, UF, valor, etapa, prazo atual,
+responsável e prazo original quando revisado.
+Formulário em 3 colunas:
+  prazo prometido (date);
+  responsável (select com opção Não atribuído);
+  etapa atual/próxima etapa;
+  justificativa em textarea de largura total, até 500 caracteres;
+  Salvar alterações e mensagem de estado.
+
+Sequência de etapas:
+  recebido -> em_preparacao -> despachado -> entregue.
+Preserve o contrato de avanço permitido e o controle de versão do servidor.
+Ao revisar um prazo já definido, exija justificativa.
+Envie somente campos alterados, junto de versao e motivo.
+Não aceite silenciosamente conflito de versão; mostre a mensagem da API.
+Quando nada mudou, informe "Nenhuma alteração para salvar."
+
+Histórico em details com linha vertical, pontos e eventos em ordem reversa.
+Analista vê autor, antes/depois e justificativa interna quando retornados.
+Cliente não recebe notas internas nem dados privados da equipe.
+Ofereça conversa contextual de IA para o pedido demonstrativo.
+
+12. Área do cliente e carrinho
+
+Na área do cliente, queremos um cabeçalho horizontal claro com a marca e os
+links Rastrear compra/Catálogo/Meus pedidos,
+acesso à conta, Sair quando autenticado e botão escuro de carrinho com contador lima.
+
+Main max-width 1440px, padding 38px 5vw 80px.
+Hero interno escuro #19271f, raio 24px, grid 1.5fr 1fr, padding clamp(30px,5vw,70px).
+Título "Da escolha à entrega. / Acompanhe de perto.", tamanho clamp(42px,5.3vw,78px).
+Descrição do fluxo demonstrativo e CTA "Explorar catálogo ↗".
+À direita, logo ampliado dentro de órbita circular, com animação da loja
+independente:7s ease-in-out, leve flutuação/rotação.
+
+Faixa explícita de projeto acadêmico:
+  sem cobrança ou envio real;
+  categorias/preços históricos Olist;
+  ilustrações simbólicas;
+  pedidos demonstrativos fora da avaliação de ML.
+
+Ordem das seções:
+  01 Rastreio demonstrativo;
+  02 Catálogo — "Um pouco de cada universo.";
+  03 Meus pedidos — "Seus pedidos, por aqui.".
+
+Catálogo:
+  GET real ao backend; estado Carregando catálogo e erro legível;
+  grid 3 colunas, gap 22px;
+  cartão branco, borda #dde2d6, raio 18px;
+  hover translateY(-5px) e sombra suave;
+  área visual190px com SVG simbólico84px;
+  nome de categoria21px, descrição12px, preço22px;
+  botão circular lima42px com "+".
+  Categorias, IDs e preços vêm da API. Não inventar produtos pagos ou estoque.
+  Usar os seis ícones e fundos da seção 5, em ciclo quando necessário.
+  No canto da ilustração, mostrar "OLIST / 01", "OLIST / 02" e assim por diante.
+  Descrição dos produtos: "Produto anonimizado · preço mediano histórico.
+  Ilustração representativa da categoria."
+
+Carrinho:
+  persistir mapa produto->quantidade em "entregacerta-carrinho-v1";
+  quantidades 1–10 por produto; remover ao chegar a zero;
+  recalcular quantidade total e valor com centavos inteiros;
+  validar entradas recuperadas do armazenamento;
+  drawer direito min(100%,480px),100dvh, fundo claro, padding 30px;
+  backdrop escuro com blur 3px;
+  controles +/- circulares30px; total demonstrativo;
+  destino por UF brasileira; botão "Criar pedido de demonstração ↗";
+  visitante recebe link de login; nenhuma etapa de pagamento.
+
+Checkout:
+  apenas usuário cliente autenticado pode concluir seu pedido;
+  enviar itens/produto_id/quantidade, uf e chave_requisicao UUID;
+  não enviar preço como autoridade;
+  usar a mesma chave de idempotência ao repetir uma tentativa pendente;
+  evitar duplo envio; informar sucesso/erro e atualizar os pedidos;
+  o backend calcula preços e persiste o pedido.
+
+Meus pedidos:
+  consultar apenas pedidos autorizados da conta, últimos 100;
+  cartões com valores, UF, status, prazo prometido e cronologia;
+  quatro etapas: Recebido, Em preparação, Despachado, Entregue;
+  linha de progresso horizontal com etapas concluídas em verde;
+  atualizações e prazos ausentes explícitos;
+  ações para conversar com o assistente sobre o próprio pedido.
+  Não mostrar score nem previsão real do CatBoost nesses pedidos novos.
+
+Footer com identificação acadêmica, acesso da equipe e atribuição
+"Dados Olist · 2016–2018 · CC BY-NC-SA 4.0".
+
+13. Rastreamento de demonstração
+
+Por enquanto, o rastreio é só uma demonstração com códigos de exemplo.
+Precisamos deixar isso visível para quem usa. Não vamos integrar uma API de
+transportadora nem prometer consulta a compras reais nesta reprodução.
+
+Layout desktop:
+  grid .85fr / 1.15fr, borda1px #d3dacd, raio 24px;
+  bloco esquerdo escuro com ícone seta em círculo lima;
+  título "Um código. / Todo o caminho.";
+  input e botão "Rastrear ↗"; códigos de exemplo em botões;
+  bloco direito claro para estado vazio e resultado.
+
+Códigos fixos para esta demonstração:
+  ECDEMO001 — Campinas/SP -> Belo Horizonte/MG, em trânsito;
+              prazo/estimativa16/11/2026.
+  ECDEMO002 — Recife/PE -> Olinda/PE, saiu para entrega;
+              prazo/estimativa13/11/2026.
+  ECDEMO003 — São Paulo/SP -> Salvador/BA, possível atraso;
+              prazo14/11/2026, estimativa17/11/2026.
+
+Use como referência fixa "13/11/2026 às 10h", inclusive em acessos futuros.
+Não atualize as datas para parecer um rastreamento real. Abaixo estão os
+históricos fictícios a exibir, sempre do evento mais recente para o mais antigo:
+
+ECDEMO001:
+  13/11/2026 · 09h10 — Pedido em trânsito.
+    Transferência de Campinas, SP, para Belo Horizonte, MG.
+  12/11/2026 · 18h40 — Pedido recebido no centro de distribuição.
+    Separação concluída para a próxima etapa.
+  11/11/2026 · 08h30 — Pedido postado. Coleta registrada em Campinas, SP.
+  10/11/2026 · 14h20 — Pedido criado. A loja preparou o envio.
+  Leitura: "No cenário, a entrega está estimada dentro do prazo prometido."
+
+ECDEMO002:
+  13/11/2026 · 08h15 — Saiu para entrega.
+    Pedido encaminhado para a rota de entrega em Olinda, PE.
+  12/11/2026 · 17h30 — Pedido chegou à unidade de destino.
+    Pedido recebido em Olinda, PE.
+  11/11/2026 · 10h00 — Pedido postado. Coleta registrada em Recife, PE.
+  10/11/2026 · 16h10 — Pedido criado. A loja preparou o envio.
+  Leitura: "No cenário, o pedido saiu para entrega na data estimada.
+  A entrega ainda não foi confirmada."
+
+ECDEMO003:
+  13/11/2026 · 09h00 — Reprogramação da transferência.
+    O cenário inclui uma nova data estimada de entrega.
+  12/11/2026 · 12h30 — Pedido em trânsito.
+    Transferência de São Paulo, SP, para Salvador, BA.
+  10/11/2026 · 15h00 — Pedido postado. Coleta registrada em São Paulo, SP.
+  09/11/2026 · 11h45 — Pedido criado. A loja preparou o envio.
+  Leitura: "Neste exemplo, a estimativa está 3 dias após o prazo prometido.
+  É uma situação fictícia para demonstrar um alerta, sem cálculo de probabilidade."
+
+Ao digitar outro código, limpe o resultado anterior. Ignore espaços e
+normalize letras para maiúsculas. Os botões de exemplo preenchem e executam
+a consulta local. Não faça requisição de rede nesse componente.
+Código desconhecido deve resultar em aviso claro, sem gerar um resultado aleatório.
+
+Resultado:
+  código/status; rota; origem demonstrativa;
+  cinco etapas: Pedido criado, Postado, Em trânsito, Saiu para entrega,
+  Entregue; marcar como concluídas as anteriores e como atual a etapa do cenário;
+  cartões de prazo e estimativa;
+  leitura verde ou âmbar;
+  timeline vertical de eventos com datas;
+  indicação "Sem API externa · sem previsão de ML".
+  Resultados não entram no banco de pedidos, treinamento ou métricas.
+
+14. Login e cadastro
+
+/entrar usa header claro e layout1.05fr/1fr, min-height calc(100vh - 89px).
+À esquerda, painel escuro editorial, padding clamp(32px,6vw,100px):
+  "CONECTANDO CADA ETAPA";
+  título "Seu pedido. / Seu espaço. / Mais clareza.";
+  texto de apoio e marca 150px inclinada -9 graus.
+À direita, formulário max-width 640px, padding 48px clamp(24px,5vw,86px).
+
+Título "Vamos continuar?" e descrição de acesso.
+Pílula de alternância Entrar/Criar conta de cliente, com tab ativo escuro.
+Cadastro mostra nome, e-mail e senha; login mostra e-mail e senha.
+Nome até 80 caracteres; e-mail até 254; senha até 128.
+Cadastro exige 12 caracteres; login aceita a senha fornecida sem impor
+retroativamente a regra de cadastro no cliente.
+Mostrar/Ocultar senha com aria-pressed e autocomplete adequado.
+Feedback de validação, envio, falha, carregamento e conta já autenticada.
+
+Cadastro público cria somente cliente. Não exibir seletor que permita
+autocadastro como analista.
+Cliente segue para /cliente#meus-pedidos.
+Analista segue para /dashboard ou /pedidos conforme destino permitido.
+Não aceitar destino arbitrário externo em query string.
+
+15. Aparência e acesso ao assistente de IA
+
+Queremos o botão do assistente acessível o tempo todo, em qualquer página
+e posição de rolagem. Ele só deve ficar escondido durante a intro. Visitante pode abrir o drawer,
+mas recebe orientação para entrar; o envio exige autenticação.
+
+Botão flutuante:
+  position:fixed; z-index45;
+  right/bottom max(24px,env(safe-area-inset-*));
+  altura mínima 64px; padding 11px 18px 11px 12px; gap 13px;
+  fundo lima, borda #eaff9d, raio 20px e sombra;
+  ícone 40px em quadrado escuro arredondado, rótulo Assistente/AI,
+  subtítulo "Pergunte sobre a análise" e seta ↗;
+  hover sobe5px; active sobe1px.
+  Dashboard usa versão compacta 54px, right22px/bottom20px,
+  ícone 34px e sem subtítulo.
+
+Drawer:
+  dialog fixo à direita, largura min(450px,calc(100% - 24px)),
+  altura 100dvh, raio 24px 0 0 24px, fundo #202823;
+  sombra à esquerda, borda #3d4b3b;
+  backdrop #0b170c70 com blur 5px;
+  entrada lateral .35s com --ease; saída .2s ease-in;
+  cabeçalho e composer fixos dentro do flex; conteúdo central rola;
+  fechamento por botão circular40px, Escape e backdrop quando apropriado;
+  foco retorna ao launcher/acionador, scroll do fundo bloqueado.
+
+Cabeçalho:
+  logo 40px; eyebrow "SEU PRÓXIMO PONTO DE VISTA";
+  título "Assistente EntregaCerta";
+  toolbar "Conversa geral" ou contexto selecionado, e "＋ Nova conversa".
+
+Boas-vindas:
+  badge "Assistente com IA";
+  símbolo ✳;
+  "Boas perguntas. / Novas perspectivas.";
+  sugestões dependentes do perfil.
+  Analista: significado do score, formação da fila, limites da análise.
+  Cliente: onde acompanhar pedidos, prazo não definido, entregas demonstrativas.
+  Ao clicar em uma sugestão, preencha a mensagem e dê foco ao campo;
+  aguarde o usuário enviar. Use estas perguntas:
+    Analista: "Como interpretar o score de atraso dos pedidos?", "Como funciona
+    a seleção dos pedidos para a fila de análise?", "Quais são os limites
+    desta análise histórica?".
+    Cliente: "Onde acompanho meus pedidos?", "O que significa prazo prometido
+    não definido?", "Esta loja realiza entregas reais?".
+
+Contexto:
+  details "Contexto da conversa", fundo #29332d, raio 12px;
+  explicar o que o servidor fornece à IA;
+  filtros do explorador não alteram automaticamente o contexto do assistente;
+  pedido específico precisa ser selecionado explicitamente.
+
+Mensagens:
+  gap 28px;
+  usuário à direita, largura máxima88%, fundo #e2ead7,
+  padding 12px 16px, raio 18px 18px 4px 18px;
+  assistente à esquerda, max-width 96%, fundo #eaf0f8,
+  borda #d4deeb, padding 14px 16px, raio 18px 18px 18px 4px;
+  texto 14px, line-height 1.85, wrap de palavras longas;
+  erro/indisponibilidade em fundo #fff7e9 e texto âmbar;
+  entrada .6s; conteúdo da resposta aparece com fade .45s;
+  carregamento indica espera, sem inventar texto de resposta ou streaming.
+
+Área para escrever a mensagem:
+  fundo #19221c e borda superior;
+  textarea mínimo64px, máximo140px, resize vertical;
+  fundo #263128, texto claro, raio 12px, padding 12px;
+  contador 0/1000; limite1000 caracteres;
+  Enter envia; Shift+Enter insere linha; respeitar composição IME;
+  botões Copiar pergunta e Enviar pergunta;
+  envio desabilitado em branco, durante request ou sem sessão;
+  mensagem de memória das últimas6 trocas, sessão e 30min sem atividade;
+  explicar que feedback salva pergunta/resposta.
+
+16. Conversas, evidências e falhas do assistente
+
+Implemente o controle de conversa_id, requisicao_id e resposta_id retornados
+pela API e enviados nas operações correspondentes.
+Uma consulta por vez; timeout 120s; cancelamento por troca de sessão/contexto.
+Na falha, preservar pergunta e exibir "Tentar novamente".
+Repetir com o mesmo requisicao_id para idempotência, sem duplicar a pergunta.
+Nova conversa cancela a anterior, limpa a memória visual e informa o novo contexto.
+Não reaproveitar conversa depois de logout, inclusive novo login da mesma pessoa.
+
+Botões de contexto de pedido:
+  origem "olist" para histórico, "loja" para pedido demonstrativo;
+  fechar modal anterior ao abrir o assistente para evitar sobreposição de dialogs;
+  encaminhar identificação, não campos privados fabricados no navegador.
+  Autorização e conteúdo efetivo são resolvidos pelo backend.
+
+Renderização da resposta:
+  suportar um subconjunto de Markdown: parágrafos, listas,
+  headings, ênfase, código inline e blocos pre;
+  nunca inserir HTML bruto recebido da IA;
+  usar textContent/criação de nós para conteúdo não confiável;
+  não executar scripts, handlers ou URLs perigosas vindos de mensagens.
+
+Evidências:
+  referências [E1], [E2] etc são controles clicáveis apenas quando associadas
+  a itens reais retornados na resposta;
+  painel "Ver evidências" com origem, data da consulta, data do lote quando houver;
+  itens com ID, rótulo, valor e unidade; ausências explícitas;
+  fontes citadas em destaque e apresentadas antes das não citadas;
+  clicar referência abre painel, rola/foca o item correspondente;
+  não inventar fonte para texto sem citação e não confundir referência existente
+  com garantia automática de correção semântica.
+
+Ações da resposta:
+  copiar resposta com evidências citadas;
+  avaliação útil/não útil;
+  negativa pede categoria:
+    incorreta, confusa, nao_respondeu, outro;
+  indicar salvando/salvo/erro; aria-pressed no voto;
+  persistir feedback pela API e não apenas trocar a cor do botão.
+
+Falha da GenAI não bloqueia dashboard, filtros, ML, loja ou PDF de contingência.
+Não mostrar texto predefinido como se tivesse sido gerado por uma chamada real.
+Nunca colocar a chave Gemini no frontend ou chamar o provedor diretamente.
+
+17. Relatório em PDF
+
+Queremos um botão de PDF no dashboard com mensagens de progresso.
+O arquivo deve ser gerado pelo servidor, com autorização de analista.
+O frontend envia somente analise_id para o servidor.
+O PDF inclui a fila completa registrada no momento da análise, independente dos filtros
+da tabela. Não envie métricas, scores ou texto de IA produzidos pelo navegador
+como fonte de verdade para o documento.
+
+Fluxo:
+  análise válida -> botão habilitado;
+  clique -> guardar analise_id e identidade atuais;
+  mostrar "Gerando PDF…" e aria-busy;
+  request com timeout 120s;
+  validar Content-Type application/pdf;
+  Blob/ObjectURL -> download entregacerta-relatorio.pdf;
+  verificar X-Resumo-GenAI: incluido ou indisponivel;
+  indicar se o resumo é GenAI ou contingência automática;
+  se o dashboard mudou durante a geração, explicar que o arquivo corresponde
+  à análise selecionada no clique;
+  em sessão trocada, não entregar arquivo de outro usuário;
+  em 404/410, invalidar analise_id e pedir nova análise;
+  liberar ObjectURL.
+
+Registro da análise disponível por até 30min conforme backend. A funcionalidade é
+exclusiva do analista no frontend e na autorização do servidor.
+
+18. Contratos previstos para integrar com o backend
+
+Use URLs relativas de mesma origem. Os nomes abaixo são o contrato de
+integração esperado; concentre essas chamadas em módulos fáceis de adaptar:
+
+  GET    /api/auth/sessao
+         Estado autenticado, usuario e csrf quando autorizado.
+  POST   /api/auth/entrar
+         JSON: email, senha.
+  POST   /api/auth/cadastrar
+         JSON: nome, email, senha; cadastro somente cliente.
+  POST   /api/auth/sair
+         Revoga sessão no servidor.
+
+  GET    /api/prioridades
+         contexto, observacao, modelo, pedidos_avaliados, pedidos_na_fila,
+         fracao_fila, fila, analise_id e metadados da política.
+         Para cota_diaria_pendentes: pendentes_avaliados, base_capacidade,
+         limites_diarios[{data,pendentes,selecionados}].
+         Cada item da fila: order_id, score_atraso, prioridade=1.
+
+  GET    /api/pedidos
+         Query: pagina, tamanho(25/50/100), busca, prioridade(todos/0/1),
+         uf, categoria, inicio, fim, score_min, score_max,
+         ordem(score-desc/score-asc/data-desc/data-asc/valor-desc),
+         atualizar=true somente quando solicitado.
+         Resposta: total, na_fila, filtrados, filtrados_na_fila, pagina,
+         tamanho, paginas, pedidos, opcoes{ufs,categorias}, consultado_em,
+         fracao_fila e descrição/política do modelo.
+         Os detalhes são montados com os campos do item retornado,
+         sem criar um endpoint de detalhes inexistente.
+
+  GET    /api/loja/catalogo
+         produtos com IDs, categorias, preços em centavos e campos do catálogo.
+  GET    /api/cliente/pedidos
+         Somente pedidos autorizados do cliente atual.
+  POST   /api/cliente/pedidos
+         itens[{produto_id,quantidade}], uf, chave_requisicao.
+  GET    /api/analista/pedidos-loja
+  GET    /api/analista/responsaveis
+  PATCH  /api/analista/pedidos-loja/{id}
+         versao, motivo e campos alterados:
+         prazo_prometido, responsavel_id, status.
+
+  POST   /api/assistente/conversas
+         pedido selecionado ou null.
+  DELETE /api/assistente/conversas/{conversa_id}
+  POST   /api/assistente
+         pergunta, conversa_id, requisicao_id.
+         Resposta inclui disponivel/resposta e, quando presentes,
+         identificadores e evidencias.
+  POST   /api/assistente/avaliacoes
+         conversa_id, resposta_id, avaliacao(1/-1), categoria.
+  POST   /api/analista/relatorio-pdf
+         analise_id; resposta PDF binária e X-Resumo-GenAI.
+
+Use os nomes dos campos descritos. Considere estas estruturas, sem preencher
+campos ausentes com dados inventados:
+  Sessão: autenticado, usuario com id/nome/perfil, e csrf quando disponível.
+    Os perfis são cliente e analista.
+  Catálogo: produtos com id, categoria e preco_centavos; observacao com o
+    texto de origem dos dados. Os valores monetários do catálogo são inteiros
+    em centavos, divididos por 100 somente para a apresentação.
+  Pedido histórico: order_id, order_approved_at, uf_origem, customer_state,
+    categoria_principal, valor_pago, valor_itens, valor_frete, score_atraso,
+    prioridade, quantidade_itens, quantidade_vendedores, parcelas_maximas,
+    tipo_pagamento_principal, prazo_prometido_dias, peso_total_g,
+    distancia_media_vendedores_km, distancia_max_vendedores_km.
+    Quando fornecidos: checkpoint_at, situacao_modelo,
+    distancia_vendedor_referencia_km. Campos de checkpoint podem faltar.
+    Quando situacao_modelo estiver preenchida e for diferente de
+    "pontuado_em_D-1", mostrar "Não pontuado". Se o campo estiver ausente,
+    usar o score válido retornado, mantendo a descrição da política da API.
+  Pedidos da loja: id, criado_em, uf, status, total_centavos, prazo_prometido,
+    prazo_original e eventos. Para o analista, também cliente, responsável,
+    responsavel_id e versao, conforme a resposta autorizada.
+    Eventos contêm em, status quando houver e alteracoes de prazo com anterior
+    e novo. Informações internas só aparecem quando autorizadas pelo servidor.
+  Criação de conversa: envie pedido nulo para conversa geral ou um objeto com
+    tipo (olist/loja) e id; receba conversa_id. O campo se chama tipo no JSON,
+    embora a interface descreva esse valor como a origem do pedido.
+  Resposta do chat: disponivel booleano, resposta textual, conversa_id,
+    resposta_id e evidencias quando disponíveis.
+    evidencias contém origem, consultado_em, lote_carregado_em opcional,
+    citadas (IDs como E1/E2) e itens. Cada item tem id, rotulo, valor e formato
+    quando informado. Preserve datas, unidades e tipos sem reinterpretar
+    um score como probabilidade.
+
+Trate os estados HTTP de forma coerente: 401 limpa a sessão; 403 informa falta
+de permissão; 404 indica recurso não encontrado; 409 exige atualizar o pedido
+antes de salvar novamente; 422 mostra erro de validação; 429 permite tentar
+novamente respeitando eventual Retry-After; falhas 5xx mostram indisponibilidade.
+Para o PDF, 404/410 invalidam a análise e pedem uma nova consulta.
+Use detail textual do backend quando apropriado, sem exibir HTML ou segredos.
+Se a resposta não corresponder ao formato esperado, preserve a última tela
+válida e informe que não foi possível atualizar.
+
+Globais e eventos:
+  window.ecAuth: estado, ready, conferir, aplicar;
+  window.ecFetch: credentials same-origin, cache no-store e CSRF;
+  ec:session: mudança de sessão;
+  ec:expired: expiração em página pública;
+  ec:analise: analiseId/carregando para o relatório;
+  um evento compartilhado para seleção de pedido, com tipo e id, tratado
+    pelo assistente para abrir uma conversa restrita ao registro escolhido.
+  Implemente esses recursos compartilhados uma única vez e use os mesmos
+    nomes em todos os módulos. A mudança de contexto limpa a conversa anterior.
+
+O navegador não pode transformar um erro401/403/503 em sucesso visual.
+Tratar rede indisponível, JSON inválido, payload inconsistente, timeout,
+expiração de sessão e conflito de alteração.
+
+Validação da fila:
+  IDs únicos e não vazios;
+  scores numéricos finitos entre 0 e 1;
+  prioridade1 em cada selecionado;
+  pedidos_na_fila igual ao tamanho da lista;
+  contagens inteiras e não negativas;
+  soma das cotas diárias coerente com pendentes e selecionados;
+  ceil da cota em cada dia, sem substituir por 65% do lote completo;
+  preservar a seleção recebida ao ordenar para exibição.
+
+19. Contas, permissões e privacidade
+
+Sessão real por cookie HttpOnly, não token persistido em localStorage.
+CSRF e identidade em memória. Usar credentials:'same-origin'.
+Em métodos de escrita, enviar X-CSRF-Token recebido do servidor.
+O servidor continua responsável por validar origem, sessão, perfil e acesso aos próprios pedidos.
+
+HTML privado usa data-protected e fica sem exibir conteúdo até session-ready.
+Cliente/visitante não pode acessar dashboard/Pedidos históricos só porque
+alterou um valor de JavaScript ou copiou a URL.
+Não introduzir login fictício, senha universal, bypass local ou usuário analista
+hardcoded para tornar uma demonstração visual mais fácil.
+
+Revalidar sessão quando necessário: retorno de bfcache, aba visível, intervalo
+na área protegida. Logout sincroniza abas pelo evento de storage e limpa
+resultados privados. Dados das análises ficam em memória; armazenar apenas
+preferências de animação, carrinho demonstrativo e filtros. Nunca armazene
+scores, conversas privadas ou tokens de sessão de forma persistente.
+
+Não copiar .env, senha de banco, sessões reais, e-mails reais ou chaves do
+provedor para o frontend, para o prompt de exemplo ou para logs de teste.
+
+20. Animações, navegação e acessibilidade
+
+Transição entre páginas:
+  habilitar View Transitions para navegação entre documentos da mesma origem;
+  página antiga: .22s ease-in, opacity0 e translateY(-8px);
+  nova página: .38s --ease, opacity0/translateY(18px) -> estado normal.
+  Se o navegador não suportar a animação, os links continuam funcionando.
+  Não interceptar toda navegação com um SPA improvisado.
+  Tratar rejeição de viewTransition.ready e skipTransition sob pausa/reduced-motion.
+
+Entrada dos elementos durante a rolagem:
+  .reveal-pending inicia opacity0 e translateY(32px);
+  transição .75s --ease, delay via variável quando existente;
+  observer threshold .08, rootMargin inferior -32px;
+  foco do teclado também revela o bloco;
+  depois que o elemento aparecer, deixe-o visível e pare de observá-lo;
+  nesta especificação, a entrada ocorre uma vez por elemento e por carregamento.
+
+Pausa:
+  localStorage "entregacerta-motion-paused";
+  preferência do sistema tem precedência;
+  aria-pressed atualizado, rótulos "Ativar movimento"/"Pausar movimento";
+  em reduced-motion, controle informa "Movimento reduzido";
+  remover animações/transições e scroll suave, mantendo conteúdo visível;
+  não deixar blocos transparentes quando o observer não funcionar.
+
+Acessibilidade:
+  lang=pt-BR; landmarks; heading hierarchy; skip links;
+  labels associados; botões nativos; dialogs com nomes e foco;
+  aria-expanded/controls para drawers e menus;
+  aria-live/status para operações e mensagens;
+  focus-visible perceptível para teclado;
+  somente o foco programático do título da home não desenha contorno;
+  não remover globalmente outlines;
+  menu mobile com foco contido, Escape e fundo inerte;
+  IDs longos quebram ou truncam sem quebrar o layout;
+  contadores e mensagens não dependem apenas de cor;
+  textareas mobile16px para evitar zoom involuntário;
+  safe-area-inset e 100dvh em drawers/intro.
+
+21. Ajustes para celular, tablet e computador
+
+Validar pelo menos 1440×900,1366×768,1024×768,768×1024,390×844 e 360×800.
+Implemente os tamanhos e as mudanças de layout abaixo com media queries.
+Aplique as regras gerais antes das regras específicas de cada largura.
+
+Home:
+  >=1600px: hero min-height 680px, visual540px.
+  <=1150px: conteúdo com 64px de margem total, hero560px, visual410px.
+  <=960px: esconder CTA extra do header, reduzir gaps e visual350px.
+  <=700px: header72px, conteúdo com 40px de margem total, hero em 1 coluna,
+    título clamp(68px,15.5vw,108px), ilustração abaixo centrada/max450px;
+    processo em 1 coluna, toolbar quebra, cards de métricas2 colunas.
+  <=440px: título 18vw, visual 300px; ocultar o link "Como funciona"
+    do cabeçalho se faltar espaço, mantendo o acesso pela seção e pelo rodapé.
+
+Intro:
+  regras para largura<=600px ou altura<=580px;
+  reduzir geometria, posicionar a caixa em 57%;
+  em altura<=500px, caption e caixa ficam mais compactos, centro em 64%;
+  nunca deixar Pular abertura ou o botão da caixa fora da viewport.
+
+Área do analista:
+  <=1250px: workspace em 1 coluna; insights em 2 colunas; métricas em 2 colunas;
+    filtros principais de pedidos em 2 colunas.
+  <=960px: retirar margin-left; sidebar vira drawer
+    min(280px,calc(100% - 48px)); z-index60; backdrop 55;
+    menu-hambúrguer38px; header70px; conteúdo padding 24px;
+    backdrop, foco e inert corretos.
+  <=600px: padding 18px, título36px, ações empilhadas;
+    insights em 1 coluna; métricas continuam2;
+    busca/categoria ocupam linha inteira, filtros extras em 2 colunas;
+    tabela rola dentro do painel e não estoura a página.
+
+Cliente/login:
+  <=800px: login1 coluna, remover emblema grande;
+    hero do cliente1 coluna e ocultar arte lateral; catálogo 2 colunas.
+  <=480px: catálogo 1 coluna, imagem165px; header quebra;
+    timeline de pedidos2×2; footer vertical.
+
+Rastreio:
+  <=980px: busca e resultado empilhados; exemplos podem ficar em 3 colunas.
+  <=600px: exemplos verticais, input/botão empilhados, datas em 1 coluna.
+
+Assistente:
+  <=700px: drawer ocupa100% da largura, sem raio/borda lateral;
+    launcher compacto a18px das bordas; esconder subtítulo/seta;
+    textarea 16px.
+  <=520px: reduzir o padding da toolbar e da área de mensagem para 12px,
+    permitir quebra dos controles e manter envio, fechar e contador visíveis.
+  altura<=600px: reduzir padding e altura do textarea sem esconder o envio.
+
+22. O que mostrar quando não houver dados ou conexão
+
+O front depende das APIs do projeto para consultar pedidos, autenticar
+as contas, obter scores e usar a GenAI. Queremos preservar essa integração.
+
+Se houver backend disponível, conecte às APIs descritas. Se estiver
+criando apenas o front, explique quais serviços faltam e mostre os estados
+vazios ou de indisponibilidade.
+As rotas estáticas podem ser servidas com um servidor mínimo, sem implementar
+um novo sistema de ML, banco ou Gemini.
+
+Dados de exemplo podem ajudar a testar a interface, desde que fiquem
+separados e identificados como teste. No uso normal, os scores devem vir
+da API. Os três códigos ECDEMO são a demonstração fictícia de rastreio
+definida na seção 13, com identificação visível na página.
+
+Não gravar uma resposta da API no localStorage como fonte permanente do painel.
+Não colocar números históricos como placeholder com aparência de dado atualizado.
+Não tornar "Gerar relatório" uma impressão de tela se o servidor não respondeu.
+
+23. Ordem sugerida para construir e conferir
+
+Queremos uma implementação completa, organizada e fácil de executar:
+  1) Leia este prompt e organize os componentes compartilhados: marca, botões,
+     menu, modal, avisos, assistente, autenticação e formatação de dados.
+  2) Crie a pasta frontend e os arquivos listados, escrevendo a implementação
+     a partir desta especificação. Se houver um repositório existente, preserve
+     tudo que não fizer parte do frontend solicitado.
+  3) Comece pelos tokens, tipografia, espaçamentos e estrutura das cinco páginas.
+  4) Desenhe os SVGs e construa a caixa 3D da intro. Confira as dimensões e
+     mantenha sua animação independente da caixa ilustrativa da página inicial.
+  5) Faça as interações: menus, modais, filtros, paginação, carrinho, animações
+     de navegação, pausa de movimento e estados de carregamento/erro.
+  6) Implemente os módulos de API e conecte os dados sem deixar números de
+     demonstração nos indicadores reais.
+  7) Integre assistente, evidências, feedback e geração de PDF conforme o perfil.
+  8) Teste o uso no computador, no celular, por teclado e com movimento reduzido.
+  9) Confira os fluxos de visitante, cliente e analista com contas autorizadas,
+     quando houver backend. Sem backend, use testes de interface isolados e
+     informe quais integrações não puderam ser verificadas.
+  10) Entregue os arquivos completos e explique como executar, o que foi testado
+      e quais dependências ainda precisam estar disponíveis.
+
+Não é necessário que o HTML ou o JavaScript tenham uma única forma de escrita.
+O resultado precisa respeitar o desenho e os comportamentos especificados,
+com código legível e módulos pequenos, sem acrescentar funções não solicitadas.
+
+24. O que precisamos conferir no final
+
+Visual:
+  [ ] Logo e SVG da caixa desenhados com as formas e cores especificadas.
+  [ ] Cinco páginas completas com rotas próprias.
+  [ ] Paleta, tipografia, textos e espaçamentos seguem as medidas do prompt.
+  [ ] Sidebar somente nas áreas de analista.
+  [ ] Intro somente na home; sem abertura automática.
+  [ ] Slogan da intro em ciclo de 5; slogan da página permanece fixo.
+  [ ] Tilt e float da intro em elementos distintos.
+  [ ] Caixa do hero com movimento próprio, sem interação indevida da intro.
+  [ ] Portal mostra a página real com perspectiva e não uma imagem falsa.
+  [ ] Menus, drawer, modais e tabelas funcionam em telas pequenas.
+
+Funcionalidade:
+  [ ] Último resultado válido preservado diante de falha de atualização.
+  [ ] Filtros não mudam a seleção do modelo.
+  [ ] Não pontuado não vira probabilidade zero.
+  [ ] Cota diária de pendentes validada corretamente.
+  [ ] Estados vazios, loading, erro e sessão expirada cobertos.
+  [ ] CSV corresponde ao recorte; PDF corresponde ao conjunto completo da análise.
+  [ ] PDF protegido por perfil e dependente de análise válida.
+  [ ] Loja, histórico Olist e rastreio fictício permanecem separados.
+  [ ] Mudanças operacionais têm versão e histórico real do servidor.
+  [ ] Chat com contexto explícito, evidências, cópia, feedback e retry.
+
+Qualidade:
+  [ ] Sem chaves de API, senhas ou tokens privados nos arquivos.
+  [ ] Sem innerHTML não confiável em mensagens/campos retornados.
+  [ ] Autorização não depende somente do navegador.
+  [ ] Teclado, foco, labels, Escape e reduced-motion verificados.
+  [ ] Sem overflow horizontal global ou controles cobertos pelo launcher.
+  [ ] IDs únicos e listeners sem duplicação.
+  [ ] Nenhuma nova biblioteca visual introduzida sem necessidade.
+  [ ] Arquivos implementados por completo, sem TODO, pseudocódigo ou trechos omitidos.
+
+25. O que esperamos receber
+
+Entregue o frontend completo, com os HTML, CSS, JavaScript e SVG organizados
+na pasta frontend. O visual deve seguir a descrição: verde escuro e lima,
+título grande na entrada, caixa 3D clicável, painel limpo para o analista e
+uma área de cliente com catálogo, pedidos e rastreio demonstrativo.
+
+Inclua instruções curtas para servir as cinco rotas e os arquivos estáticos.
+Explique como conectar à API e quais recursos dependem do servidor. Abrir o
+HTML com duplo clique não substitui um servidor para autenticação e chamadas
+HTTP; oriente a execução local adequada ao ambiente de destino.
+
+Queremos os estados normais, vazios, de carregamento e de falha implementados.
+O assistente e o PDF precisam tratar indisponibilidade sem impedir o uso do
+restante da página. Não transforme um clique sem resposta do servidor em
+uma confirmação de sucesso.
+
+Ao terminar, descreva de forma breve o que foi entregue, quais verificações
+foram feitas e o que ainda precisa ser conferido com o backend. Todo o visual
+e os componentes devem ser construídos a partir deste prompt, sem solicitar
+arquivos de implementação ou imagens de referência adicionais.
