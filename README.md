@@ -6,6 +6,24 @@
 
 O EntregaCerta AI transforma dados históricos da Olist em uma fila de revisão humana: consulta os pedidos no PostgreSQL, calcula scores com CatBoost, apresenta os detalhes no dashboard e usa IA Generativa para auxiliar a interpretação e produzir relatórios em PDF. O objetivo é ajudar o analista a decidir **quais pedidos revisar primeiro**.
 
+## Equipe e créditos
+
+Desenvolvido pela equipe [ProjetoBootcampTCS](https://github.com/ProjetoBootcampTCS). Este é um projeto acadêmico da equipe, não um produto oficial da TCS ou da Olist.
+
+| Integrante | Principais contribuições informadas pela equipe | Commits declarados |
+|---|---|---:|
+| [Nikolas Carminato](https://github.com/NikolasCarminato) | Gestão do repositório Git, versionamento e backups; frontend em HTML, CSS e JavaScript, identidade visual, design, animações e integração com o backend; integração do controle de acesso; engenharia de prompts, configuração e integração do assistente GenAI, testes das respostas, tratamento de falhas da API e relatórios PDF; treinamento, análise e comparação de diferentes modelos de ML até a escolha do modelo final; automação de processos; infraestrutura local com Terraform e Docker; slides, roteiro e preparação da demonstração. | 42 |
+| [Pedro Henrique da Costa Silva](https://github.com/Pedrh316) | Análise exploratória, tratamento e qualidade dos dados; engenharia de atributos e definição de rótulos; estruturação SQL; treinamento de diferentes modelos; registro, organização e documentação dos experimentos; automação de processos. | 25 |
+| [Murilo Carvalho Silva](https://github.com/Naoakibb) | Treinamento e validação de modelos de ML; comparação de algoritmos e ajuste de hiperparâmetros; validação temporal e verificação de vazamento de dados. | 6 |
+| [Matheus Assalin](https://github.com/MathDeMarco) | Treinamento e validação de modelos de ML; comparação de resultados e interpretação das métricas; análise do equilíbrio entre identificação de atrasos e tamanho da fila de revisão humana. | 6 |
+| **Total declarado pela equipe** | | **79** |
+
+**Sobre a atribuição:** parte dos commits foi registrada pela conta compartilhada do projeto. Os números acima foram informados pela equipe e não constituem uma contagem auditada dos commits únicos do histórico Git atual. Esta documentação registra a participação individual sem alterar as autorias no Git. O [histórico de contribuições do GitHub](https://github.com/ProjetoBootcampTCS/EntregaCerta-AI/graphs/contributors) mostra as autorias registradas nas contas.
+
+As atividades podem ter sido realizadas em conjunto; a tabela não atribui exclusividade nem usa quantidade de commits como medida de impacto. As contribuições podem ser revisadas pela equipe. Na GenAI, o trabalho envolveu integração, engenharia de prompts e configuração do assistente, sem fine-tuning dos pesos do LLM.
+
+## Visão geral
+
 **Stack:** Python, Pandas, FastAPI, PostgreSQL, CatBoost, Gemini, HTML, CSS, JavaScript, Docker e Terraform. Scikit-learn e PyTorch também foram utilizados nos experimentos de ML.
 
 [Demonstração em vídeo](https://github.com/ProjetoBootcampTCS/EntregaCerta-AI/blob/main/output/apresentacao/video%20backup.mp4) · [Slides finais](output/apresentacao/EntregaCerta_AI_apresentacao_v20.pptx) · [Arquitetura](Docs/diagramas/arquitetura.svg) · [Instalação completa](Docs/instalacao_novo_pc.md)
@@ -147,19 +165,6 @@ Se a skill não aparecer na ferramenta, informe o caminho do seu `SKILL.md`. Rev
 | `output/apresentacao/` | Slides, roteiro e vídeo de demonstração |
 
 Comece pelo [guia de instalação](Docs/instalacao_novo_pc.md). Para entender as decisões, consulte o [modelo integrado](Docs/modelo_ver07.md) e o [registro de desenvolvimento](Docs/desenvolvimento.md), que inclui etapas históricas já substituídas.
-
-## Equipe e créditos
-
-Desenvolvido pela equipe [ProjetoBootcampTCS](https://github.com/ProjetoBootcampTCS). O [histórico de contribuições](https://github.com/ProjetoBootcampTCS/EntregaCerta-AI/graphs/contributors) preserva as autorias registradas no Git. Este é um projeto acadêmico da equipe, não um produto oficial da TCS ou da Olist.
-
-| Integrante | Principais contribuições informadas pela equipe |
-|---|---|
-| [Nikolas Carminato](https://github.com/NikolasCarminato) | Engenharia de prompts e integrações; configuração e ajuste do assistente GenAI; frontend, design e animações; treinamento e análise de modelos; automação de processos. |
-| [Pedro Henrique da Costa Silva](https://github.com/Pedrh316) | Análise exploratória e tratamento de dados; treinamento de modelos; registro e organização dos testes de diferentes modelos; automação de processos. |
-| [Murilo Carvalho Silva](https://github.com/Naoakibb) | Treinamento e validação do modelo de machine learning. |
-| [Matheus Assalin](https://github.com/MathDeMarco) | Treinamento e validação do modelo de machine learning. |
-
-A tabela registra a divisão atual do trabalho e pode ser atualizada pela equipe. Algumas atividades foram realizadas em conjunto; o histórico de commits não representa sozinho toda a contribuição de cada integrante.
 
 ## Dados e condições de uso
 

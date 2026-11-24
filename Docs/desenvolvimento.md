@@ -2391,3 +2391,23 @@ Oito chamadas de desenvolvimento e uma no contêiner são uma amostra funcional;
 o ajuste de prompt não garante que toda resposta futura seguirá o formato.
 Os testes de PDF desta correção foram automatizados; não houve nova geração
 de PDF com a API real nesta rodada, pois seu prompt não foi modificado.
+
+### 2026-11-24 — Créditos e contribuições para o portfólio
+
+A seção [Equipe e créditos](../README.md#equipe-e-créditos) passou para o início
+do README e concentra a descrição atual das contribuições dos quatro integrantes.
+Foram detalhadas as responsabilidades em dados, experimentos de ML, frontend,
+integrações, GenAI, Git, backups, infraestrutura e materiais da apresentação.
+O trabalho com GenAI é descrito como integração, engenharia de prompts e
+configuração; não houve fine-tuning dos pesos do LLM.
+
+A equipe informou a seguinte distribuição de commits: **Nikolas: 42; Pedro: 25;
+Murilo: 6; Matheus: 6; total declarado: 79**. Trata-se de atribuição declarada
+pela equipe, não de contagem auditada dos commits únicos do histórico Git atual.
+Parte dos commits foi registrada por conta compartilhada, e algumas atividades
+foram realizadas em conjunto. Quantidade de commits não mede, isoladamente,
+o impacto ou a extensão das contribuições.
+
+Esta atualização é documental. As entradas históricas, os materiais apresentados,
+os modelos e a aplicação foram preservados; não houve reatribuição de autoria
+nem reescrita do histórico Git. O README é a referência atual para os créditos.
